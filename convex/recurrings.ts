@@ -1,3 +1,5 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { paginationOptsValidator } from "convex/server";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
@@ -12,10 +14,26 @@ function randomId16() {
   return out;
 }
 
+async function requireUserId(ctx: Parameters<typeof getAuthUserId>[0]) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
+    throw new Error("Unauthenticated");
+  }
+  return userId;
+}
+
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("recurrings").collect();
+  args: {
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { paginationOpts }) => {
+    const userId = await requireUserId(ctx);
+    const numItems = Math.min(paginationOpts.numItems, 50);
+    return await ctx.db
+      .query("recurrings")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .order("desc")
+      .paginate({ ...paginationOpts, numItems });
   },
 });
 
@@ -33,7 +51,8 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("recurrings", args);
+    const userId = await requireUserId(ctx);
+    return await ctx.db.insert("recurrings", { ...args, userId });
   },
 });
 
@@ -55,18 +74,41 @@ export const bulkCreate = mutation({
     ),
   },
   handler: async (ctx, { rows }) => {
+    const userId = await requireUserId(ctx);
     for (const row of rows) {
-      await ctx.db.insert("recurrings", row);
+      await ctx.db.insert("recurrings", { ...row, userId });
     }
     return { inserted: rows.length };
+  },
+});
+
+export const claimLegacyRows = mutation({
+  args: { batchSize: v.optional(v.number()) },
+  handler: async (ctx, { batchSize }) => {
+    const userId = await requireUserId(ctx);
+    const limit = Math.min(batchSize ?? 200, 500);
+    const docs = await ctx.db
+      .query("recurrings")
+      .withIndex("by_user_id", (q) => q.eq("userId", undefined))
+      .take(limit);
+
+    for (const doc of docs) {
+      await ctx.db.patch(doc._id, { userId });
+    }
+
+    return { claimed: docs.length, done: docs.length < limit };
   },
 });
 
 export const clearAll = mutation({
   args: { batchSize: v.optional(v.number()) },
   handler: async (ctx, { batchSize }) => {
+    const userId = await requireUserId(ctx);
     const limit = batchSize ?? 200;
-    const docs = await ctx.db.query("recurrings").take(limit);
+    const docs = await ctx.db
+      .query("recurrings")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .take(limit);
     for (const doc of docs) {
       await ctx.db.delete(doc._id);
     }
@@ -89,6 +131,12 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...rest }) => {
+    const userId = await requireUserId(ctx);
+    const existing = await ctx.db.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Not found");
+    }
+
     await ctx.db.patch(id, rest);
     return id;
   },
@@ -113,6 +161,12 @@ function formatJerusalemNow() {
 export const remove = mutation({
   args: { id: v.id("recurrings") },
   handler: async (ctx, { id }) => {
+    const userId = await requireUserId(ctx);
+    const existing = await ctx.db.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Not found");
+    }
+
     await ctx.db.delete(id as Id<"recurrings">);
     return id;
   },
@@ -121,6 +175,7 @@ export const remove = mutation({
 export const materializeDueExpenses = mutation({
   args: { runDate: v.string() },
   handler: async (ctx, { runDate }) => {
+    const userId = await requireUserId(ctx);
     const day = Number(runDate.split("-")[2] ?? "0");
     if (!Number.isFinite(day) || day < 1 || day > 31) {
       throw new Error("runDate must be YYYY-MM-DD");
@@ -128,7 +183,9 @@ export const materializeDueExpenses = mutation({
 
     const due = await ctx.db
       .query("recurrings")
-      .withIndex("by_day_of_month", (q) => q.eq("dayOfMonth", day))
+      .withIndex("by_user_id_day_of_month", (q) =>
+        q.eq("userId", userId).eq("dayOfMonth", day),
+      )
       .collect();
 
     let created = 0;
@@ -142,14 +199,17 @@ export const materializeDueExpenses = mutation({
       const automationKey = `recurring:${recurring._id}:${runDate}`;
       const already = await ctx.db
         .query("expenses")
-        .withIndex("by_automation_key", (q) => q.eq("automationKey", automationKey))
-        .collect();
-      if (already.length > 0) {
+        .withIndex("by_user_id_automation_key", (q) =>
+          q.eq("userId", userId).eq("automationKey", automationKey),
+        )
+        .first();
+      if (already) {
         skipped++;
         continue;
       }
 
       await ctx.db.insert("expenses", {
+        userId,
         expense: recurring.name,
         type: recurring.type ?? "Recurring",
         account: recurring.paidBy,

@@ -1,3 +1,4 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
@@ -19,17 +20,26 @@ function normalizeDate(value: string) {
   return input;
 }
 
+async function requireUserId(ctx: Parameters<typeof getAuthUserId>[0]) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
+    throw new Error("Unauthenticated");
+  }
+  return userId;
+}
+
 export const list = query({
   args: {
-    paginationOpts: v.optional(paginationOptsValidator),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { paginationOpts }) => {
-    const safePaginationOpts = paginationOpts ?? { cursor: null, numItems: 25 };
-    const numItems = Math.min(safePaginationOpts.numItems, 50);
+    const userId = await requireUserId(ctx);
+    const numItems = Math.min(paginationOpts.numItems, 50);
     return await ctx.db
       .query("expenses")
+      .withIndex("by_user_id_date", (q) => q.eq("userId", userId))
       .order("desc")
-      .paginate({ ...safePaginationOpts, numItems });
+      .paginate({ ...paginationOpts, numItems });
   },
 });
 
@@ -48,8 +58,10 @@ export const create = mutation({
     automationKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     return await ctx.db.insert("expenses", {
       ...args,
+      userId,
       date: normalizeDate(args.date),
     });
   },
@@ -74,9 +86,11 @@ export const bulkCreate = mutation({
     ),
   },
   handler: async (ctx, { rows }) => {
+    const userId = await requireUserId(ctx);
     for (const row of rows) {
       await ctx.db.insert("expenses", {
         ...row,
+        userId,
         date: normalizeDate(row.date),
       });
     }
@@ -84,11 +98,33 @@ export const bulkCreate = mutation({
   },
 });
 
+export const claimLegacyRows = mutation({
+  args: { batchSize: v.optional(v.number()) },
+  handler: async (ctx, { batchSize }) => {
+    const userId = await requireUserId(ctx);
+    const limit = Math.min(batchSize ?? 200, 500);
+    const docs = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id", (q) => q.eq("userId", undefined))
+      .take(limit);
+
+    for (const doc of docs) {
+      await ctx.db.patch(doc._id, { userId });
+    }
+
+    return { claimed: docs.length, done: docs.length < limit };
+  },
+});
+
 export const clearAll = mutation({
   args: { batchSize: v.optional(v.number()) },
   handler: async (ctx, { batchSize }) => {
+    const userId = await requireUserId(ctx);
     const limit = batchSize ?? 200;
-    const docs = await ctx.db.query("expenses").take(limit);
+    const docs = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .take(limit);
     for (const doc of docs) {
       await ctx.db.delete(doc._id);
     }
@@ -112,6 +148,12 @@ export const update = mutation({
     automationKey: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...rest }) => {
+    const userId = await requireUserId(ctx);
+    const existing = await ctx.db.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Not found");
+    }
+
     await ctx.db.patch(id, {
       ...rest,
       date: normalizeDate(rest.date),
@@ -123,6 +165,11 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("expenses") },
   handler: async (ctx, { id }) => {
+    const userId = await requireUserId(ctx);
+    const existing = await ctx.db.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error("Not found");
+    }
     await ctx.db.delete(id as Id<"expenses">);
     return id;
   },

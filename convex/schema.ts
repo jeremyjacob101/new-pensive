@@ -1,8 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
   expenses: defineTable({
+    userId: v.optional(v.id("users")),
     expense: v.string(),
     type: v.string(),
     account: v.string(),
@@ -15,10 +18,14 @@ export default defineSchema({
     expenseId: v.string(),
     automationKey: v.optional(v.string()),
   })
+    .index("by_user_id_date", ["userId", "date"])
+    .index("by_user_id_automation_key", ["userId", "automationKey"])
+    .index("by_user_id", ["userId"])
     .index("by_expense_id", ["expenseId"])
     .index("by_date", ["date"])
     .index("by_automation_key", ["automationKey"]),
   incomings: defineTable({
+    userId: v.optional(v.id("users")),
     incoming: v.string(),
     paidBy: v.string(),
     incomeType: v.string(),
@@ -30,9 +37,12 @@ export default defineSchema({
     comments: v.optional(v.string()),
     incomingId: v.string(),
   })
+    .index("by_user_id_date", ["userId", "date"])
+    .index("by_user_id", ["userId"])
     .index("by_incoming_id", ["incomingId"])
     .index("by_date", ["date"]),
   recurrings: defineTable({
+    userId: v.optional(v.id("users")),
     status: v.string(),
     name: v.string(),
     type: v.optional(v.string()),
@@ -43,5 +53,8 @@ export default defineSchema({
     category: v.string(),
     paidTo: v.string(),
     notes: v.optional(v.string()),
-  }).index("by_day_of_month", ["dayOfMonth"]),
+  })
+    .index("by_day_of_month", ["dayOfMonth"])
+    .index("by_user_id_day_of_month", ["userId", "dayOfMonth"])
+    .index("by_user_id", ["userId"]),
 });

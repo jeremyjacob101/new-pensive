@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
 import type * as expenses from "../expenses.js";
+import type * as http from "../http.js";
 import type * as incomings from "../incomings.js";
 import type * as recurrings from "../recurrings.js";
 
@@ -19,7 +21,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   expenses: typeof expenses;
+  http: typeof http;
   incomings: typeof incomings;
   recurrings: typeof recurrings;
 }>;

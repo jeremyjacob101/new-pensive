@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvexAuth, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Doc } from "../convex/_generated/dataModel";
 
@@ -59,7 +60,68 @@ function toAmount(value: string) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function App() {
+function SignInForm() {
+  const { signIn } = useAuthActions();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await signIn("password", {
+        flow: mode,
+        email: email.trim(),
+        password,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="page">
+      <h1>Pensive</h1>
+      <form className="entry-form" onSubmit={onSubmit}>
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Please wait..." : mode === "signIn" ? "Sign In" : "Create Account"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode((prev) => (prev === "signIn" ? "signUp" : "signIn"))}
+        >
+          {mode === "signIn" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+        </button>
+        {error ? <p>{error}</p> : null}
+      </form>
+    </main>
+  );
+}
+
+function DataApp() {
+  const { signOut } = useAuthActions();
   const [activeTab, setActiveTab] = useState<
     "expenses" | "incomings" | "recurrings"
   >(
@@ -73,6 +135,7 @@ function App() {
   const [editingRecurringId, setEditingRecurringId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [claimingLegacy, setClaimingLegacy] = useState(false);
   const createExpense = useMutation(api.expenses.create);
   const createIncoming = useMutation(api.incomings.create);
   const createRecurring = useMutation(api.recurrings.create);
@@ -82,6 +145,9 @@ function App() {
   const deleteExpense = useMutation(api.expenses.remove);
   const deleteIncoming = useMutation(api.incomings.remove);
   const deleteRecurring = useMutation(api.recurrings.remove);
+  const claimLegacyExpenses = useMutation(api.expenses.claimLegacyRows);
+  const claimLegacyIncomings = useMutation(api.incomings.claimLegacyRows);
+  const claimLegacyRecurrings = useMutation(api.recurrings.claimLegacyRows);
   const {
     results: expenses,
     status: expensesStatus,
@@ -92,12 +158,31 @@ function App() {
     status: incomingsStatus,
     loadMore: loadMoreIncomings,
   } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 25 });
-  const recurrings = useQuery(api.recurrings.list) as
-    | Array<Doc<"recurrings">>
-    | undefined;
+  const {
+    results: recurrings,
+    status: recurringsStatus,
+    loadMore: loadMoreRecurrings,
+  } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 25 });
 
-  if (recurrings === undefined) {
-    return <main className="page">Loading...</main>;
+  async function claimUntilDone(
+    claimFn: (args: { batchSize?: number }) => Promise<{ done: boolean; claimed: number }>,
+  ) {
+    let done = false;
+    while (!done) {
+      const result = await claimFn({ batchSize: 200 });
+      done = result.done;
+    }
+  }
+
+  async function claimLegacyData() {
+    setClaimingLegacy(true);
+    try {
+      await claimUntilDone(claimLegacyExpenses);
+      await claimUntilDone(claimLegacyIncomings);
+      await claimUntilDone(claimLegacyRecurrings);
+    } finally {
+      setClaimingLegacy(false);
+    }
   }
 
   async function onAddExpense(e: FormEvent<HTMLFormElement>) {
@@ -225,6 +310,15 @@ function App() {
 
   return (
     <main className="page">
+      <div className="tabs">
+        <button type="button" className="tab" onClick={claimLegacyData} disabled={claimingLegacy}>
+          {claimingLegacy ? "Claiming Legacy Data..." : "Claim Legacy Data"}
+        </button>
+        <button type="button" className="tab" onClick={() => void signOut()}>
+          Sign Out
+        </button>
+      </div>
+
       <div className="tabs">
         <button type="button" className="tab" onClick={() => setFormType("expense")}>
           Add Expense
@@ -532,6 +626,7 @@ function App() {
         ) : null}
         </>
       ) : (
+        <>
         <table>
           <thead>
             <tr>
@@ -623,9 +718,29 @@ function App() {
             )}
           </tbody>
         </table>
+        {recurringsStatus === "CanLoadMore" ? (
+          <button type="button" onClick={() => loadMoreRecurrings(25)}>
+            Load More Recurrings
+          </button>
+        ) : null}
+        </>
       )}
     </main>
   );
+}
+
+function App() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+
+  if (isLoading) {
+    return <main className="page">Loading...</main>;
+  }
+
+  if (!isAuthenticated) {
+    return <SignInForm />;
+  }
+
+  return <DataApp />;
 }
 
 export default App;
