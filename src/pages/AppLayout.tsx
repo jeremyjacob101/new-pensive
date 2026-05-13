@@ -3,11 +3,6 @@ import { THEME_STORAGE_KEY } from "../keys/localStorage";
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 
-export type AppLayoutContext = {
-  isDark: boolean;
-  onToggleTheme: () => void;
-};
-
 export function AppLayout() {
   const [storedThemeDark, setStoredThemeDark] = useLocalStorage(
     THEME_STORAGE_KEY,

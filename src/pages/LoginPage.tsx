@@ -33,7 +33,7 @@ export function LoginPage() {
       await signInPassword({ email: username, password, flow: mode });
       const from = (location.state as { from?: { pathname?: string } } | null)
         ?.from?.pathname;
-      navigate(from || "/app/expenses", { replace: true });
+      navigate(from || "/expenses", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {

@@ -1,8 +1,11 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
-import { AppSectionPage } from "../pages/AppSectionPage";
+import { Recurrings } from "../pages/Recurrings";
 import { AppLayout } from "../pages/AppLayout";
 import { LoginPage } from "../pages/LoginPage";
+import { Incomings } from "../pages/Incomings";
 import { useAuth } from "../context/useAuth";
+import { Expenses } from "../pages/Expenses";
+import { Options } from "../pages/Options";
 
 export function AppRoutes() {
   return (
@@ -12,25 +15,14 @@ export function AppRoutes() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/app" element={<AppLayout />}>
-          <Route index element={<Navigate to="expenses" replace />} />
-          <Route
-            path="expenses"
-            element={<AppSectionPage activeTab="expenses" />}
-          />
-          <Route
-            path="incomings"
-            element={<AppSectionPage activeTab="incomings" />}
-          />
-          <Route
-            path="recurrings"
-            element={<AppSectionPage activeTab="recurrings" />}
-          />
-          <Route
-            path="options"
-            element={<AppSectionPage activeTab="options" />}
-          />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/expenses" replace />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/incomings" element={<Incomings />} />
+          <Route path="/recurrings" element={<Recurrings />} />
+          <Route path="/options" element={<Options />} />
         </Route>
+        <Route path="/app/*" element={<LegacyAppPathRedirect />} />
       </Route>
 
       <Route path="*" element={<RootFallback />} />
@@ -64,7 +56,7 @@ export function PublicOnlyRoute() {
   if (status === "authenticated") {
     const from = (location.state as { from?: { pathname?: string } } | null)
       ?.from?.pathname;
-    return <Navigate to={from || "/app/expenses"} replace />;
+    return <Navigate to={from || "/expenses"} replace />;
   }
 
   return <Outlet />;
@@ -75,5 +67,11 @@ export function RootFallback() {
   if (status === "loading") {
     return <main className="page loading-screen">Loading...</main>;
   }
-  return <Navigate to={isAuthenticated ? "/app/expenses" : "/login"} replace />;
+  return <Navigate to={isAuthenticated ? "/expenses" : "/login"} replace />;
+}
+
+function LegacyAppPathRedirect() {
+  const location = useLocation();
+  const redirectedPath = location.pathname.replace(/^\/app/, "") || "/";
+  return <Navigate to={redirectedPath} replace />;
 }
