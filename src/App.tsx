@@ -62,7 +62,7 @@ function toAmount(value: string) {
 
 function SignInForm() {
   const { signIn } = useAuthActions();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ function SignInForm() {
     try {
       await signIn("password", {
         flow: mode,
-        email: email.trim(),
+        email: username.trim().toLowerCase(),
         password,
       });
     } catch (err) {
@@ -90,11 +90,11 @@ function SignInForm() {
       <h1>Pensive</h1>
       <form className="entry-form" onSubmit={onSubmit}>
         <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="username"
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
         />
         <input
