@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 *.tsbuildinfo
+
+.env
+env
+env.
+/env
+env/
+/env/

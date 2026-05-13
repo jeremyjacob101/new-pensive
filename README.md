@@ -32,7 +32,7 @@ A personal finance tracking application built with React, TypeScript, Vite, and 
    npm install
    ```
 
-3. Set up environment variables (create `.env.local`):
+3. Set up environment variables (create `.env`):
    ```env
    VITE_CONVEX_URL=your_convex_url_here
    ```
@@ -121,7 +121,7 @@ public/
 
 ## 🔐 Environment Variables
 
-Create `.env.local` file:
+Create `.env` file:
 
 ```env
 VITE_CONVEX_URL=your_convex_production_url
