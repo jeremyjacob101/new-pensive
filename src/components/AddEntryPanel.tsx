@@ -1,14 +1,12 @@
 import type { FormType, UserOptions } from "../types/workspace";
-import { toOptionValues } from "../helpers/options";
+import { getDefaultOptionValue, toOptionValues } from "../helpers/options";
 import { api } from "../../convex/_generated/api";
 import { OptionPicker } from "./OptionPicker";
 import { saveOption } from "../pages/actions";
 import type { SyntheticEvent } from "react";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { MenuItemKey } from "../types/ui";
-
-const REGULAR_OPTION = "regular";
 
 function getTodayIsoDate() {
   const now = new Date();
@@ -39,21 +37,30 @@ export function AddEntryPanel({
 }) {
   const addUserOption = useMutation(api.userOptions.add);
   const todayIsoDate = getTodayIsoDate();
+  const defaults = useMemo(
+    () => ({
+      expenseType: getDefaultOptionValue(userOptions, "expenseType"),
+      incomeType: getDefaultOptionValue(userOptions, "incomeType"),
+      account: getDefaultOptionValue(userOptions, "account"),
+      category: getDefaultOptionValue(userOptions, "category"),
+    }),
+    [userOptions],
+  );
 
-  const [expenseType, setExpenseType] = useState(REGULAR_OPTION);
+  const [expenseType, setExpenseType] = useState("");
   const [expenseAccount, setExpenseAccount] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("");
-  const [incomingType, setIncomingType] = useState(REGULAR_OPTION);
+  const [incomingType, setIncomingType] = useState("");
   const [incomingAccount, setIncomingAccount] = useState("");
   const [recurringCategory, setRecurringCategory] = useState("");
 
   const resetOptionState = () => {
-    setExpenseType(REGULAR_OPTION);
-    setExpenseAccount("");
-    setExpenseCategory("");
-    setIncomingType(REGULAR_OPTION);
-    setIncomingAccount("");
-    setRecurringCategory("");
+    setExpenseType(defaults.expenseType);
+    setExpenseAccount(defaults.account);
+    setExpenseCategory(defaults.category);
+    setIncomingType(defaults.incomeType);
+    setIncomingAccount(defaults.account);
+    setRecurringCategory(defaults.category);
   };
 
   const openForm = (nextFormType: FormType) => {

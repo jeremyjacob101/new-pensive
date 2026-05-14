@@ -29,8 +29,8 @@ export function Recurrings() {
     results: recurrings,
     status: recurringsStatus,
     loadMore: loadMoreRecurrings,
-  } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 25 });
-  useAutoLoadMore(recurringsStatus, () => loadMoreRecurrings(25));
+  } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 50 });
+  useAutoLoadMore(recurringsStatus, () => loadMoreRecurrings(50));
 
   return (
     <>

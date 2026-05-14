@@ -7,6 +7,7 @@ import { saveOption } from "./actions";
 export function Options() {
   const addUserOption = useMutation(api.userOptions.add);
   const updateUserOptionColor = useMutation(api.userOptions.updateColor);
+  const setUserOptionDefault = useMutation(api.userOptions.setDefault);
   const removeUserOption = useMutation(api.userOptions.remove);
   const userOptions = useQuery(api.userOptions.list);
 
@@ -68,6 +69,20 @@ export function Options() {
                     <span className="option-color-name">{option.value}</span>
                     <span className="option-color-underline" aria-hidden="true" />
                   </span>
+                  <button
+                    className={`option-star-btn${option.isDefault ? " is-default" : ""}`}
+                    type="button"
+                    aria-label={`${option.isDefault ? "Unset" : "Set"} default for ${option.value}`}
+                    onClick={() =>
+                      void setUserOptionDefault({
+                        kind: key,
+                        value: option.value,
+                        isDefault: !option.isDefault,
+                      })
+                    }
+                  >
+                    ★
+                  </button>
                   <button
                     className="option-remove-btn"
                     type="button"

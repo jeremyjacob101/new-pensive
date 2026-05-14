@@ -256,12 +256,13 @@ async function upsertOption(
     kind,
     value: trimmed,
     color: assignedColor,
+    isDefault: false,
   });
 }
 
 function formatOptionList(
   kind: OptionKind,
-  values: Array<{ value: string; color?: string }>,
+  values: Array<{ value: string; color?: string; isDefault?: boolean }>,
 ) {
   const sorted = [...values].sort((a, b) => a.value.localeCompare(b.value));
   const used: string[] = [];
@@ -270,7 +271,11 @@ function formatOptionList(
     const normalizedColor = normalizeHexColor(row.color ?? "");
     if (normalizedColor) {
       used.push(normalizedColor);
-      return { value: row.value, color: normalizedColor };
+      return {
+        value: row.value,
+        color: normalizedColor,
+        isDefault: row.isDefault === true,
+      };
     }
 
     const deterministicColor = pickMostDistinctColor(
@@ -278,7 +283,11 @@ function formatOptionList(
       makeSeededRng(`${kind}:${row.value}`),
     );
     used.push(deterministicColor);
-    return { value: row.value, color: deterministicColor };
+    return {
+      value: row.value,
+      color: deterministicColor,
+      isDefault: row.isDefault === true,
+    };
   });
 }
 
@@ -303,6 +312,7 @@ export const list = query({
         expenseTypeRows.map((row) => ({
           value: row.value,
           color: (row as { color?: string }).color,
+          isDefault: (row as { isDefault?: boolean }).isDefault,
         })),
       ),
       account: formatOptionList(
@@ -310,6 +320,7 @@ export const list = query({
         accountRows.map((row) => ({
           value: row.value,
           color: (row as { color?: string }).color,
+          isDefault: (row as { isDefault?: boolean }).isDefault,
         })),
       ),
       category: formatOptionList(
@@ -317,6 +328,7 @@ export const list = query({
         categoryRows.map((row) => ({
           value: row.value,
           color: (row as { color?: string }).color,
+          isDefault: (row as { isDefault?: boolean }).isDefault,
         })),
       ),
       incomeType: formatOptionList(
@@ -324,6 +336,7 @@ export const list = query({
         incomeTypeRows.map((row) => ({
           value: row.value,
           color: (row as { color?: string }).color,
+          isDefault: (row as { isDefault?: boolean }).isDefault,
         })),
       ),
     };
@@ -408,6 +421,30 @@ export const remove = mutation({
       .first();
     if (existing) {
       await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+export const setDefault = mutation({
+  args: { kind: optionKind, value: v.string(), isDefault: v.boolean() },
+  handler: async (ctx, { kind, value, isDefault }) => {
+    const userId = await requireUserId(ctx);
+    const trimmedValue = value.trim();
+    if (!trimmedValue) throw new Error("Option value is required");
+
+    const rows = await ctx.db
+      .query("userOptions")
+      .withIndex("by_user_kind", (q) =>
+        q.eq("userId", userId).eq("kind", kind))
+      .take(MAX_OPTIONS_PER_KIND);
+
+    const selected = rows.find((row) => row.value === trimmedValue);
+    if (!selected) throw new Error("Option not found");
+
+    for (const row of rows) {
+      const nextIsDefault = isDefault && row._id === selected._id;
+      if ((row as { isDefault?: boolean }).isDefault === nextIsDefault) continue;
+      await ctx.db.patch(row._id, { isDefault: nextIsDefault });
     }
   },
 });

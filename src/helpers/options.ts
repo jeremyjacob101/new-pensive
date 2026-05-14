@@ -16,3 +16,10 @@ export function getOptionColor(
   const option = userOptions?.[kind]?.find((item) => item.value === value);
   return option?.color ?? FALLBACK_COLOR;
 }
+
+export function getDefaultOptionValue(
+  userOptions: UserOptions | undefined,
+  kind: OptionKind,
+) {
+  return userOptions?.[kind]?.find((item) => item.isDefault)?.value ?? "";
+}

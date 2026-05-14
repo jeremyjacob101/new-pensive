@@ -3,13 +3,14 @@ import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { EditableRowActions } from "../components/EditableRowActions";
 import { getOptionColor, toOptionValues } from "../helpers/options";
 import { useAutoLoadMore } from "../hooks/useAutoLoadMore";
+import { useScrollMonthIndicator } from "../hooks/useScrollMonthIndicator";
 import { OptionPicker } from "../components/OptionPicker";
 import type { EditValues } from "../types/workspace";
-import { formatDisplayDate } from "../helpers/dates";
+import { formatMonthLabel, formatShortDisplayDate, formatYearLabel } from "../helpers/dates";
 import { api } from "../../convex/_generated/api";
 import { CreditCard } from "lucide-react";
 import { saveOption } from "./actions";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function Incomings() {
   const [editingIncomingId, setEditingIncomingId] = useState<string | null>(
@@ -30,15 +31,27 @@ export function Incomings() {
     results: incomings,
     status: incomingsStatus,
     loadMore: loadMoreIncomings,
-  } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 25 });
-  useAutoLoadMore(incomingsStatus, () => loadMoreIncomings(25));
+  } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 50 });
+  useAutoLoadMore(incomingsStatus, () => loadMoreIncomings(50));
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const activeDate = useScrollMonthIndicator(listRef, incomings[0]?.date ?? "");
+  const monthText = formatMonthLabel(activeDate);
+  const yearText = formatYearLabel(activeDate);
+  const labelKey = `${monthText}-${yearText}`;
 
   return (
     <>
       {incomings.length === 0 ? (
         <p>No incomings yet.</p>
       ) : (
-        <div className="entry-card-list">
+        <div className="entries-with-month">
+          <aside className="month-indicator" aria-hidden="true">
+            <span key={labelKey} className="month-indicator-value">
+              <span className="month-indicator-month">{monthText}</span>
+              <span className="month-indicator-year">{yearText}</span>
+            </span>
+          </aside>
+          <div ref={listRef} className="entry-card-list">
           {incomings.map((row) => {
             const isExpanded = expandedIncomingId === row._id;
             const isEditing = editingIncomingId === row._id;
@@ -52,6 +65,7 @@ export function Incomings() {
             return (
               <div
                 key={row._id}
+                data-row-date={row.date}
                 className={`entry-card${isExpanded ? " is-expanded" : ""}`}
               >
                 <div className="entry-card-main">
@@ -74,7 +88,7 @@ export function Incomings() {
                     </div>
                   </div>
                   <div className="entry-card-date">
-                    {formatDisplayDate(row.date)}
+                    {formatShortDisplayDate(row.date)}
                   </div>
                   <div className="entry-row-controls">
                     <EditableRowActions
@@ -260,6 +274,7 @@ export function Incomings() {
               </div>
             );
           })}
+          </div>
         </div>
       )}
     </>
