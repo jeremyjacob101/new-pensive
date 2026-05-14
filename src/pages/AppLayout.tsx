@@ -20,6 +20,7 @@ export function AppLayout() {
   const [saving, setSaving] = useState(false);
 
   const createExpense = useMutation(api.expenses.create);
+  const bulkCreateExpenses = useMutation(api.expenses.bulkCreate);
   const createIncoming = useMutation(api.incomings.create);
   const createRecurring = useMutation(api.recurrings.create);
   const addUserOption = useMutation(api.userOptions.add);
@@ -69,6 +70,7 @@ export function AppLayout() {
                   onSelectTab: (tab) => navigate(`/${tab}`),
                 })
               }
+              bulkCreateExpenses={bulkCreateExpenses}
               onAddIncoming={(e) =>
                 handleAddIncoming(e, {
                   createIncoming,

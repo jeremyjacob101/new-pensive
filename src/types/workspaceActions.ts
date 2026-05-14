@@ -16,6 +16,8 @@ export type WorkspaceMutations = {
     notes?: string;
     comments?: string;
     expenseId: string;
+    baseExpenseId?: string;
+    subExpenseId?: string;
   }) => Promise<unknown>;
   createIncoming: (args: {
     incoming: string;
@@ -28,6 +30,8 @@ export type WorkspaceMutations = {
     notes?: string;
     comments?: string;
     incomingId: string;
+    baseIncomingId?: string;
+    subIncomingId?: string;
   }) => Promise<unknown>;
   createRecurring: (args: {
     status: string;
@@ -69,6 +73,9 @@ export type WorkspaceMutations = {
     notes?: string;
     comments?: string;
     expenseId: string;
+    baseExpenseId?: string;
+    subExpenseId?: string;
+    automationKey?: string;
   }) => Promise<unknown>;
   updateIncoming: (args: {
     id: Id<"incomings">;
@@ -82,6 +89,8 @@ export type WorkspaceMutations = {
     notes?: string;
     comments?: string;
     incomingId: string;
+    baseIncomingId?: string;
+    subIncomingId?: string;
   }) => Promise<unknown>;
   updateRecurring: (args: {
     id: Id<"recurrings">;

@@ -283,6 +283,7 @@ export async function handleUpdateExpense(
       notes: deps.editValues.notes || undefined,
       comments: deps.editValues.comments || undefined,
       expenseId: deps.editValues.expenseId ?? "",
+      baseExpenseId: row.baseExpenseId ?? undefined,
     });
     deps.setEditingExpenseId(null);
   } finally {
@@ -326,6 +327,7 @@ export async function handleUpdateIncoming(
       notes: deps.editValues.notes || undefined,
       comments: deps.editValues.comments || undefined,
       incomingId: deps.editValues.incomingId ?? "",
+      baseIncomingId: row.baseIncomingId ?? undefined,
     });
     deps.setEditingIncomingId(null);
   } finally {

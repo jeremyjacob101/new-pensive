@@ -16,14 +16,15 @@ export default defineSchema({
     notes: v.optional(v.string()),
     comments: v.optional(v.string()),
     expenseId: v.string(),
-    automationKey: v.optional(v.string()),
+    baseExpenseId: v.optional(v.string()),
+    baseExpenseLabel: v.optional(v.string()),
+    subExpenseId: v.optional(v.string()),
   })
     .index("by_user_id_date", ["userId", "date"])
-    .index("by_user_id_automation_key", ["userId", "automationKey"])
     .index("by_user_id", ["userId"])
     .index("by_expense_id", ["expenseId"])
-    .index("by_date", ["date"])
-    .index("by_automation_key", ["automationKey"]),
+    .index("by_user_base_expense_id", ["userId", "baseExpenseId"])
+    .index("by_date", ["date"]),
   incomings: defineTable({
     userId: v.optional(v.id("users")),
     incoming: v.string(),
@@ -36,10 +37,13 @@ export default defineSchema({
     notes: v.optional(v.string()),
     comments: v.optional(v.string()),
     incomingId: v.string(),
+    baseIncomingId: v.optional(v.string()),
+    subIncomingId: v.optional(v.string()),
   })
     .index("by_user_id_date", ["userId", "date"])
     .index("by_user_id", ["userId"])
     .index("by_incoming_id", ["incomingId"])
+    .index("by_user_base_incoming_id", ["userId", "baseIncomingId"])
     .index("by_date", ["date"]),
   userOptions: defineTable({
     userId: v.optional(v.id("users")),

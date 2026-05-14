@@ -9,6 +9,8 @@ export const expenseHeaders = [
   "Notes",
   "Comments",
   "ExpenseID",
+  "BaseExpenseID",
+  "SubExpenseID",
 ] as const;
 
 export const incomingHeaders = [
@@ -22,6 +24,8 @@ export const incomingHeaders = [
   "Notes",
   "Comments",
   "IncomingID",
+  "BaseIncomingID",
+  "SubIncomingID",
 ] as const;
 
 export const recurringHeaders = [

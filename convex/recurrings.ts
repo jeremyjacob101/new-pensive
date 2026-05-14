@@ -4,16 +4,6 @@ import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
-function randomId16() {
-  const alphabet =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let out = "";
-  for (let i = 0; i < 16; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return out;
-}
-
 async function requireUserId(ctx: Parameters<typeof getAuthUserId>[0]) {
   const userId = await getAuthUserId(ctx);
   if (!userId) {
@@ -278,8 +268,7 @@ export const materializeDueExpenses = mutation({
 
       const alreadyExpense = await ctx.db
         .query("expenses")
-        .withIndex("by_user_id_automation_key", (q) =>
-          q.eq("userId", userId).eq("automationKey", automationKey))
+        .withIndex("by_expense_id", (q) => q.eq("expenseId", automationKey))
         .first();
       if (alreadyExpense) {
         skipped++;
@@ -297,8 +286,9 @@ export const materializeDueExpenses = mutation({
         paidTo: recurring.expensePaidTo ?? recurring.paidTo ?? "",
         notes: recurring.notes,
         comments: `Triggered at ${formatJerusalemNow()}`,
-        expenseId: randomId16(),
-        automationKey,
+        expenseId: automationKey,
+        baseExpenseId: automationKey,
+        subExpenseId: "000",
       });
       created++;
     }

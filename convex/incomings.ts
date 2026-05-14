@@ -4,6 +4,16 @@ import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
+function randomId16() {
+  const alphabet =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < 16; i += 1) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}
+
 function normalizeDate(value: string) {
   const input = value.trim();
   const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -18,6 +28,16 @@ function normalizeDate(value: string) {
   }
 
   return input;
+}
+
+function normalizeSharedFields(args: {
+  baseIncomingId?: string;
+  subIncomingId?: string;
+}) {
+  return {
+    baseIncomingId: args.baseIncomingId?.trim() || undefined,
+    subIncomingId: args.subIncomingId?.trim() || undefined,
+  };
 }
 
 async function requireUserId(ctx: Parameters<typeof getAuthUserId>[0]) {
@@ -55,11 +75,18 @@ export const create = mutation({
     notes: v.optional(v.string()),
     comments: v.optional(v.string()),
     incomingId: v.string(),
+    baseIncomingId: v.optional(v.string()),
+    subIncomingId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireUserId(ctx);
+    const incomingId = args.incomingId.trim() || randomId16();
+    const shared = normalizeSharedFields(args);
+
     return await ctx.db.insert("incomings", {
       ...args,
+      ...shared,
+      incomingId,
       userId,
       date: normalizeDate(args.date),
     });
@@ -80,14 +107,21 @@ export const bulkCreate = mutation({
         notes: v.optional(v.string()),
         comments: v.optional(v.string()),
         incomingId: v.string(),
+        baseIncomingId: v.optional(v.string()),
+        subIncomingId: v.optional(v.string()),
       }),
     ),
   },
   handler: async (ctx, { rows }) => {
     const userId = await requireUserId(ctx);
     for (const row of rows) {
+      const incomingId = row.incomingId.trim() || randomId16();
+      const shared = normalizeSharedFields(row);
+
       await ctx.db.insert("incomings", {
         ...row,
+        ...shared,
+        incomingId,
         userId,
         date: normalizeDate(row.date),
       });
@@ -125,6 +159,8 @@ export const update = mutation({
     notes: v.optional(v.string()),
     comments: v.optional(v.string()),
     incomingId: v.string(),
+    baseIncomingId: v.optional(v.string()),
+    subIncomingId: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...rest }) => {
     const userId = await requireUserId(ctx);
@@ -133,8 +169,13 @@ export const update = mutation({
       throw new Error("Not found");
     }
 
+    const incomingId = rest.incomingId.trim() || existing.incomingId;
+    const shared = normalizeSharedFields(rest);
+
     await ctx.db.patch(id, {
       ...rest,
+      ...shared,
+      incomingId,
       date: normalizeDate(rest.date),
     });
     return id;
