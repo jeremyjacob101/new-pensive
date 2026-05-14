@@ -10,4 +10,6 @@ export type LeftMenuPanelProps = {
   activeItem: MenuItemKey;
   onSelect: (item: MenuItemKey) => void;
   onUserClick: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 };

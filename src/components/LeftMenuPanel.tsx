@@ -1,4 +1,5 @@
 import type { LeftMenuPanelProps, MenuItemKey } from "../types/ui";
+import { ThemeToggle } from "./ThemeToggle";
 import type { ReactNode } from "react";
 
 export function LeftMenuPanel({
@@ -6,6 +7,8 @@ export function LeftMenuPanel({
   activeItem,
   onSelect,
   onUserClick,
+  isDark,
+  onToggleTheme,
 }: LeftMenuPanelProps) {
   return (
     <aside className="left-menu" aria-label="Main navigation">
@@ -28,18 +31,21 @@ export function LeftMenuPanel({
         })}
       </nav>
 
-      <button
-        type="button"
-        className="left-menu-user"
-        onClick={onUserClick}
-        title="Sign Out"
-        aria-label="Sign Out"
-      >
-        <span className="left-menu-icon" aria-hidden="true">
-          <UserGlyph />
-        </span>
-        <span className="left-menu-label">Sign Out</span>
-      </button>
+      <div className="left-menu-footer">
+        <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
+        <button
+          type="button"
+          className="left-menu-user"
+          onClick={onUserClick}
+          title="Sign Out"
+          aria-label="Sign Out"
+        >
+          <span className="left-menu-icon" aria-hidden="true">
+            <UserGlyph />
+          </span>
+          <span className="left-menu-label">Sign Out</span>
+        </button>
+      </div>
     </aside>
   );
 }

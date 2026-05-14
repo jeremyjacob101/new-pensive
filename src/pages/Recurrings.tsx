@@ -1,34 +1,18 @@
-import { handleAddExpense, handleAddIncoming, handleAddRecurring, handleDeleteRecurring, handleStartEditRecurring, handleUpdateRecurring } from "./actions";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
-import type { RecurringsTableProps } from "../types/workspaceActions";
-import { useNavigate, useOutletContext } from "react-router-dom";
-import type { EditValues, FormType } from "../types/workspace";
+import { handleDeleteRecurring, handleStartEditRecurring, handleUpdateRecurring } from "./actions";
+import { useMutation, usePaginatedQuery } from "convex/react";
 import { EditableRowActions } from "./ui/EditableRowActions";
-import { LeftMenuPanel } from "../components/LeftMenuPanel";
-import { AddEntryPanel } from "../components/AddEntryPanel";
-import { ThemeToggle } from "../components/ThemeToggle";
-import type { AppLayoutContext } from "../types/layout";
+import type { EditValues } from "../types/workspace";
 import { recurringHeaders } from "../types/schema";
 import { api } from "../../convex/_generated/api";
-import { useAuth } from "../context/useAuth";
 import { useState } from "react";
 
 export function Recurrings() {
-  const { isDark, onToggleTheme } = useOutletContext<AppLayoutContext>();
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const [formType, setFormType] = useState<FormType>(null);
   const [editingRecurringId, setEditingRecurringId] = useState<string | null>(
     null,
   );
   const [editValues, setEditValues] = useState<EditValues>({});
   const [saving, setSaving] = useState(false);
 
-  const createExpense = useMutation(api.expenses.create);
-  const createIncoming = useMutation(api.incomings.create);
-  const createRecurring = useMutation(api.recurrings.create);
-  const addUserOption = useMutation(api.userOptions.add);
   const updateRecurring = useMutation(api.recurrings.update);
   const deleteRecurring = useMutation(api.recurrings.remove);
 
@@ -37,107 +21,7 @@ export function Recurrings() {
     status: recurringsStatus,
     loadMore: loadMoreRecurrings,
   } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 25 });
-  const userOptions = useQuery(api.userOptions.list);
 
-  return (
-    <main className="page">
-      <div className="app-shell">
-        <LeftMenuPanel
-          items={[
-            { key: "expenses", label: "Expenses" },
-            { key: "incomings", label: "Incomings" },
-            { key: "recurrings", label: "Recurrings" },
-            { key: "options", label: "Options" },
-          ]}
-          activeItem="recurrings"
-          onSelect={(tab) => navigate(`/${tab}`)}
-          onUserClick={() => {
-            void signOut().then(() => navigate("/login", { replace: true }));
-          }}
-        />
-
-        <section className="app-content">
-          <div className="toolbar">
-            <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
-          </div>
-          <AddEntryPanel
-            formType={formType}
-            setFormType={setFormType}
-            onAddExpense={(e) =>
-              handleAddExpense(e, {
-                createExpense,
-                addUserOption,
-                setSaving,
-                setFormType,
-                onSelectTab: (tab) => navigate(`/${tab}`),
-              })
-            }
-            onAddIncoming={(e) =>
-              handleAddIncoming(e, {
-                createIncoming,
-                addUserOption,
-                setSaving,
-                setFormType,
-                onSelectTab: (tab) => navigate(`/${tab}`),
-              })
-            }
-            onAddRecurring={(e) =>
-              handleAddRecurring(e, {
-                createRecurring,
-                setSaving,
-                setFormType,
-                onSelectTab: (tab) => navigate(`/${tab}`),
-              })
-            }
-            saving={saving}
-            userOptions={userOptions}
-          />
-          <RecurringsTable
-            recurrings={recurrings}
-            recurringsStatus={recurringsStatus}
-            editingRecurringId={editingRecurringId}
-            editValues={editValues}
-            setEditValues={setEditValues}
-            saving={saving}
-            loadMoreRecurrings={loadMoreRecurrings}
-            startEditRecurring={(row) =>
-              handleStartEditRecurring(
-                row,
-                setEditingRecurringId,
-                setEditValues,
-              )
-            }
-            setEditingRecurringId={setEditingRecurringId}
-            updateRecurringRow={(row) =>
-              handleUpdateRecurring(row, {
-                updateRecurring,
-                editValues,
-                setSaving,
-                setEditingRecurringId,
-              })
-            }
-            deleteRecurringRow={(row) =>
-              handleDeleteRecurring(row, deleteRecurring, setSaving)
-            }
-          />
-        </section>
-      </div>
-    </main>
-  );
-}
-function RecurringsTable({
-  recurrings,
-  recurringsStatus,
-  editingRecurringId,
-  editValues,
-  setEditValues,
-  saving,
-  loadMoreRecurrings,
-  startEditRecurring,
-  setEditingRecurringId,
-  updateRecurringRow,
-  deleteRecurringRow,
-}: RecurringsTableProps) {
   return (
     <>
       <table>
@@ -307,10 +191,25 @@ function RecurringsTable({
                     <EditableRowActions
                       isEditing={isEditing}
                       saving={saving}
-                      onSave={() => updateRecurringRow(row)}
+                      onSave={() =>
+                        handleUpdateRecurring(row, {
+                          updateRecurring,
+                          editValues,
+                          setSaving,
+                          setEditingRecurringId,
+                        })
+                      }
                       onCancel={() => setEditingRecurringId(null)}
-                      onEdit={() => startEditRecurring(row)}
-                      onDelete={() => deleteRecurringRow(row)}
+                      onEdit={() =>
+                        handleStartEditRecurring(
+                          row,
+                          setEditingRecurringId,
+                          setEditValues,
+                        )
+                      }
+                      onDelete={() =>
+                        handleDeleteRecurring(row, deleteRecurring, setSaving)
+                      }
                     />
                   </td>
                 </tr>

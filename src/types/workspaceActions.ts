@@ -1,4 +1,4 @@
-import type { Doc, Id } from "../../convex/_generated/dataModel";
+import type { Id } from "../../convex/_generated/dataModel";
 import type { EditValues, FormType } from "./workspace";
 import type { Dispatch, SetStateAction } from "react";
 import type { OptionKind } from "./schema";
@@ -105,46 +105,4 @@ export type WorkspaceState = {
 
 export type WorkspaceConfig = {
   onSelectTab: (tab: MenuItemKey) => void;
-};
-
-export type ExpensesTableProps = {
-  expenses: Doc<"expenses">[];
-  expensesStatus: string;
-  editingExpenseId: string | null;
-  editValues: EditValues;
-  setEditValues: Dispatch<SetStateAction<EditValues>>;
-  saving: boolean;
-  loadMoreExpenses: (numItems: number) => void;
-  startEditExpense: (row: Doc<"expenses">) => void;
-  setEditingExpenseId: (id: string | null) => void;
-  updateExpenseRow: (row: Doc<"expenses">) => Promise<void>;
-  deleteExpenseRow: (row: Doc<"expenses">) => Promise<void>;
-};
-
-export type IncomingsTableProps = {
-  incomings: Doc<"incomings">[];
-  incomingsStatus: string;
-  editingIncomingId: string | null;
-  editValues: EditValues;
-  setEditValues: Dispatch<SetStateAction<EditValues>>;
-  saving: boolean;
-  loadMoreIncomings: (numItems: number) => void;
-  startEditIncoming: (row: Doc<"incomings">) => void;
-  setEditingIncomingId: (id: string | null) => void;
-  updateIncomingRow: (row: Doc<"incomings">) => Promise<void>;
-  deleteIncomingRow: (row: Doc<"incomings">) => Promise<void>;
-};
-
-export type RecurringsTableProps = {
-  recurrings: Doc<"recurrings">[];
-  recurringsStatus: string;
-  editingRecurringId: string | null;
-  editValues: EditValues;
-  setEditValues: Dispatch<SetStateAction<EditValues>>;
-  saving: boolean;
-  loadMoreRecurrings: (numItems: number) => void;
-  startEditRecurring: (row: Doc<"recurrings">) => void;
-  setEditingRecurringId: (id: string | null) => void;
-  updateRecurringRow: (row: Doc<"recurrings">) => Promise<void>;
-  deleteRecurringRow: (row: Doc<"recurrings">) => Promise<void>;
 };
