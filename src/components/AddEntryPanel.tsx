@@ -1,4 +1,5 @@
-import type { AddEntryPanelProps } from "../types/components";
+import type { FormType, UserOptions } from "../types/workspace";
+import type { SyntheticEvent } from "react";
 
 export function AddEntryPanel({
   formType,
@@ -8,7 +9,15 @@ export function AddEntryPanel({
   onAddRecurring,
   saving,
   userOptions,
-}: AddEntryPanelProps) {
+}: {
+  formType: FormType;
+  setFormType: (value: FormType) => void;
+  onAddExpense: (e: SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  onAddIncoming: (e: SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  onAddRecurring: (e: SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  saving: boolean;
+  userOptions: UserOptions | undefined;
+}) {
   return (
     <>
       <div className="tabs">

@@ -1,6 +1,6 @@
 import { handleDeleteRecurring, handleStartEditRecurring, handleUpdateRecurring } from "./actions";
+import { EditableRowActions } from "../components/EditableRowActions";
 import { useMutation, usePaginatedQuery } from "convex/react";
-import { EditableRowActions } from "./ui/EditableRowActions";
 import type { EditValues } from "../types/workspace";
 import { recurringHeaders } from "../types/schema";
 import { api } from "../../convex/_generated/api";

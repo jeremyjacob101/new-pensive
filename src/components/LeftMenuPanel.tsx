@@ -1,4 +1,4 @@
-import type { LeftMenuPanelProps, MenuItemKey } from "../types/ui";
+import type { MenuItem, MenuItemKey } from "../types/ui";
 import { ThemeToggle } from "./ThemeToggle";
 import type { ReactNode } from "react";
 
@@ -9,7 +9,14 @@ export function LeftMenuPanel({
   onUserClick,
   isDark,
   onToggleTheme,
-}: LeftMenuPanelProps) {
+}: {
+  items: MenuItem[];
+  activeItem: MenuItemKey;
+  onSelect: (item: MenuItemKey) => void;
+  onUserClick: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
+}) {
   return (
     <aside className="left-menu" aria-label="Main navigation">
       <nav className="left-menu-nav">

@@ -1,6 +1,10 @@
-import type { ThemeToggleProps } from "../types/theme";
-
-export function ThemeToggle({ isDark, onToggle }: ThemeToggleProps) {
+export function ThemeToggle({
+  isDark,
+  onToggle,
+}: {
+  isDark: boolean;
+  onToggle: () => void;
+}) {
   return (
     <button
       type="button"

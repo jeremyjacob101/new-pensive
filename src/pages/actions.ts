@@ -5,13 +5,6 @@ import type { Doc } from "../../convex/_generated/dataModel";
 import { randomId16, toAmount } from "../helpers/formatters";
 import type { OptionKind } from "../types/schema";
 
-type SetSaving = Dispatch<SetStateAction<boolean>>;
-type SetFormType = Dispatch<SetStateAction<FormType>>;
-type SetEditValues = Dispatch<SetStateAction<EditValues>>;
-type SelectTab = (
-  tab: "expenses" | "incomings" | "recurrings" | "options",
-) => void;
-
 export async function saveOption(
   addUserOption: WorkspaceMutations["addUserOption"],
   kind: OptionKind,
@@ -27,9 +20,11 @@ export async function handleAddExpense(
   deps: {
     createExpense: WorkspaceMutations["createExpense"];
     addUserOption: WorkspaceMutations["addUserOption"];
-    setSaving: SetSaving;
-    setFormType: SetFormType;
-    onSelectTab: SelectTab;
+    setSaving: Dispatch<SetStateAction<boolean>>;
+    setFormType: Dispatch<SetStateAction<FormType>>;
+    onSelectTab: (
+      tab: "expenses" | "incomings" | "recurrings" | "options",
+    ) => void;
   },
 ) {
   e.preventDefault();
@@ -78,9 +73,11 @@ export async function handleAddIncoming(
   deps: {
     createIncoming: WorkspaceMutations["createIncoming"];
     addUserOption: WorkspaceMutations["addUserOption"];
-    setSaving: SetSaving;
-    setFormType: SetFormType;
-    onSelectTab: SelectTab;
+    setSaving: Dispatch<SetStateAction<boolean>>;
+    setFormType: Dispatch<SetStateAction<FormType>>;
+    onSelectTab: (
+      tab: "expenses" | "incomings" | "recurrings" | "options",
+    ) => void;
   },
 ) {
   e.preventDefault();
@@ -123,9 +120,11 @@ export async function handleAddRecurring(
   e: SyntheticEvent<HTMLFormElement>,
   deps: {
     createRecurring: WorkspaceMutations["createRecurring"];
-    setSaving: SetSaving;
-    setFormType: SetFormType;
-    onSelectTab: SelectTab;
+    setSaving: Dispatch<SetStateAction<boolean>>;
+    setFormType: Dispatch<SetStateAction<FormType>>;
+    onSelectTab: (
+      tab: "expenses" | "incomings" | "recurrings" | "options",
+    ) => void;
   },
 ) {
   e.preventDefault();
@@ -155,7 +154,7 @@ export async function handleAddRecurring(
 export function handleStartEditExpense(
   row: Doc<"expenses">,
   setEditingExpenseId: Dispatch<SetStateAction<string | null>>,
-  setEditValues: SetEditValues,
+  setEditValues: Dispatch<SetStateAction<EditValues>>,
 ) {
   setEditingExpenseId(row._id);
   setEditValues({
@@ -175,7 +174,7 @@ export function handleStartEditExpense(
 export function handleStartEditIncoming(
   row: Doc<"incomings">,
   setEditingIncomingId: Dispatch<SetStateAction<string | null>>,
-  setEditValues: SetEditValues,
+  setEditValues: Dispatch<SetStateAction<EditValues>>,
 ) {
   setEditingIncomingId(row._id);
   setEditValues({
@@ -195,7 +194,7 @@ export function handleStartEditIncoming(
 export function handleStartEditRecurring(
   row: Doc<"recurrings">,
   setEditingRecurringId: Dispatch<SetStateAction<string | null>>,
-  setEditValues: SetEditValues,
+  setEditValues: Dispatch<SetStateAction<EditValues>>,
 ) {
   setEditingRecurringId(row._id);
   setEditValues({
@@ -217,7 +216,7 @@ export async function handleUpdateExpense(
   deps: {
     updateExpense: WorkspaceMutations["updateExpense"];
     editValues: EditValues;
-    setSaving: SetSaving;
+    setSaving: Dispatch<SetStateAction<boolean>>;
     setEditingExpenseId: Dispatch<SetStateAction<string | null>>;
   },
 ) {
@@ -245,7 +244,7 @@ export async function handleUpdateExpense(
 export async function handleDeleteExpense(
   row: Doc<"expenses">,
   deleteExpense: WorkspaceMutations["deleteExpense"],
-  setSaving: SetSaving,
+  setSaving: Dispatch<SetStateAction<boolean>>,
 ) {
   setSaving(true);
   try {
@@ -260,7 +259,7 @@ export async function handleUpdateIncoming(
   deps: {
     updateIncoming: WorkspaceMutations["updateIncoming"];
     editValues: EditValues;
-    setSaving: SetSaving;
+    setSaving: Dispatch<SetStateAction<boolean>>;
     setEditingIncomingId: Dispatch<SetStateAction<string | null>>;
   },
 ) {
@@ -288,7 +287,7 @@ export async function handleUpdateIncoming(
 export async function handleDeleteIncoming(
   row: Doc<"incomings">,
   deleteIncoming: WorkspaceMutations["deleteIncoming"],
-  setSaving: SetSaving,
+  setSaving: Dispatch<SetStateAction<boolean>>,
 ) {
   setSaving(true);
   try {
@@ -303,7 +302,7 @@ export async function handleUpdateRecurring(
   deps: {
     updateRecurring: WorkspaceMutations["updateRecurring"];
     editValues: EditValues;
-    setSaving: SetSaving;
+    setSaving: Dispatch<SetStateAction<boolean>>;
     setEditingRecurringId: Dispatch<SetStateAction<string | null>>;
   },
 ) {
@@ -331,7 +330,7 @@ export async function handleUpdateRecurring(
 export async function handleDeleteRecurring(
   row: Doc<"recurrings">,
   deleteRecurring: WorkspaceMutations["deleteRecurring"],
-  setSaving: SetSaving,
+  setSaving: Dispatch<SetStateAction<boolean>>,
 ) {
   setSaving(true);
   try {

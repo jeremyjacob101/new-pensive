@@ -1,5 +1,3 @@
-import type { EditableRowActionsProps } from "../../types/components";
-
 export function EditableRowActions({
   isEditing,
   saving,
@@ -7,7 +5,14 @@ export function EditableRowActions({
   onCancel,
   onEdit,
   onDelete,
-}: EditableRowActionsProps) {
+}: {
+  isEditing: boolean;
+  saving: boolean;
+  onSave: () => void | Promise<void>;
+  onCancel: () => void;
+  onEdit: () => void;
+  onDelete: () => void | Promise<void>;
+}) {
   if (isEditing) {
     return (
       <>

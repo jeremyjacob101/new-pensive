@@ -1,6 +1,6 @@
 import { handleDeleteIncoming, handleStartEditIncoming, handleUpdateIncoming } from "./actions";
+import { EditableRowActions } from "../components/EditableRowActions";
 import { useMutation, usePaginatedQuery } from "convex/react";
-import { EditableRowActions } from "./ui/EditableRowActions";
 import type { EditValues } from "../types/workspace";
 import { incomingHeaders } from "../types/schema";
 import { api } from "../../convex/_generated/api";
