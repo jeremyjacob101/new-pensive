@@ -1,7 +1,25 @@
 import type { FormType, UserOptions } from "../types/workspace";
+import { toOptionValues } from "../helpers/options";
+import { api } from "../../convex/_generated/api";
+import { OptionPicker } from "./OptionPicker";
+import { saveOption } from "../pages/actions";
 import type { SyntheticEvent } from "react";
+import { useMutation } from "convex/react";
+import { useState } from "react";
+import type { MenuItemKey } from "../types/ui";
+
+const REGULAR_OPTION = "regular";
+
+function getTodayIsoDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export function AddEntryPanel({
+  activeItem,
   formType,
   setFormType,
   onAddExpense,
@@ -10,6 +28,7 @@ export function AddEntryPanel({
   saving,
   userOptions,
 }: {
+  activeItem: MenuItemKey;
   formType: FormType;
   setFormType: (value: FormType) => void;
   onAddExpense: (e: SyntheticEvent<HTMLFormElement>) => Promise<void>;
@@ -18,137 +37,238 @@ export function AddEntryPanel({
   saving: boolean;
   userOptions: UserOptions | undefined;
 }) {
+  const addUserOption = useMutation(api.userOptions.add);
+  const todayIsoDate = getTodayIsoDate();
+
+  const [expenseType, setExpenseType] = useState(REGULAR_OPTION);
+  const [expenseAccount, setExpenseAccount] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState("");
+  const [incomingType, setIncomingType] = useState(REGULAR_OPTION);
+  const [incomingAccount, setIncomingAccount] = useState("");
+  const [recurringCategory, setRecurringCategory] = useState("");
+
+  const resetOptionState = () => {
+    setExpenseType(REGULAR_OPTION);
+    setExpenseAccount("");
+    setExpenseCategory("");
+    setIncomingType(REGULAR_OPTION);
+    setIncomingAccount("");
+    setRecurringCategory("");
+  };
+
+  const openForm = (nextFormType: FormType) => {
+    resetOptionState();
+    setFormType(nextFormType);
+  };
+
+  const closeForm = () => {
+    resetOptionState();
+    setFormType(null);
+  };
+
+  const openModalFromActiveTab = () => {
+    if (activeItem === "expenses") {
+      openForm("expense");
+      return;
+    }
+    if (activeItem === "incomings") {
+      openForm("incoming");
+      return;
+    }
+    if (activeItem === "recurrings") {
+      openForm("recurring");
+    }
+  };
+
   return (
     <>
-      <div className="tabs">
-        <button
-          type="button"
-          className="tab"
-          onClick={() => setFormType("expense")}
-        >
-          Add Expense
-        </button>
-        <button
-          type="button"
-          className="tab"
-          onClick={() => setFormType("incoming")}
-        >
-          Add Incoming
-        </button>
-        <button
-          type="button"
-          className="tab"
-          onClick={() => setFormType("recurring")}
-        >
-          Add Recurring
-        </button>
-      </div>
+      {activeItem !== "options" && (
+        <div className="add-entry-launcher-row">
+          <button
+            type="button"
+            className="add-entry-launcher"
+            aria-label={`Add ${activeItem.slice(0, -1)}`}
+            onClick={openModalFromActiveTab}
+          >
+            +
+          </button>
+        </div>
+      )}
 
       {formType === "expense" && (
-        <form className="entry-form" onSubmit={(e) => void onAddExpense(e)}>
-          <input name="expense" placeholder="Expense" required />
-          <input
-            name="type"
-            placeholder="Type"
-            list="expenseType-options"
-            required
-          />
-          <input
-            name="account"
-            placeholder="Account"
-            list="account-options"
-            required
-          />
-          <input
-            name="category"
-            placeholder="Category"
-            list="category-options"
-            required
-          />
-          <input name="amount" placeholder="Amount" required />
-          <input name="date" type="date" required />
-          <input name="paidTo" placeholder="PaidTo" required />
-          <input name="notes" placeholder="Notes" />
-          <input name="comments" placeholder="Comments" />
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Expense"}
-          </button>
-          <button type="button" onClick={() => setFormType(null)}>
-            Cancel
-          </button>
-        </form>
+        <div className="modal-overlay" onClick={closeForm}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add Expense</h3>
+              <button type="button" className="modal-close" onClick={closeForm}>
+                ✕
+              </button>
+            </div>
+            <form
+              className="entry-form modal-form"
+              onSubmit={(e) => void onAddExpense(e)}
+            >
+              <input name="expense" placeholder="Expense" required />
+              <OptionPicker
+                kind="expenseType"
+                label="Expense Type"
+                name="type"
+                value={expenseType}
+                options={toOptionValues(userOptions?.expenseType)}
+                placeholder="Type"
+                required
+                onChange={setExpenseType}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <OptionPicker
+                kind="account"
+                label="Account"
+                name="account"
+                value={expenseAccount}
+                options={toOptionValues(userOptions?.account)}
+                placeholder="Account"
+                required
+                onChange={setExpenseAccount}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <OptionPicker
+                kind="category"
+                label="Category"
+                name="category"
+                value={expenseCategory}
+                options={toOptionValues(userOptions?.category)}
+                placeholder="Category"
+                required
+                onChange={setExpenseCategory}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <input name="amount" placeholder="Amount" required />
+              <input
+                name="date"
+                type="date"
+                defaultValue={todayIsoDate}
+                required
+              />
+              <input name="paidTo" placeholder="PaidTo" required />
+              <input name="notes" placeholder="Notes" />
+              <input name="comments" placeholder="Comments" />
+              <button
+                type="submit"
+                className="save-plus-btn"
+                aria-label="Save expense"
+                disabled={saving}
+              >
+                +
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
       {formType === "incoming" && (
-        <form className="entry-form" onSubmit={(e) => void onAddIncoming(e)}>
-          <input name="incoming" placeholder="Incoming" required />
-          <input name="paidBy" placeholder="PaidBy" required />
-          <input
-            name="incomeType"
-            placeholder="IncomeType"
-            list="incomeType-options"
-            required
-          />
-          <input
-            name="account"
-            placeholder="Account"
-            list="account-options"
-            required
-          />
-          <input name="amount" placeholder="Amount" required />
-          <input name="date" type="date" required />
-          <input name="monthYear" placeholder="MonthYear" required />
-          <input name="notes" placeholder="Notes" />
-          <input name="comments" placeholder="Comments" />
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Incoming"}
-          </button>
-          <button type="button" onClick={() => setFormType(null)}>
-            Cancel
-          </button>
-        </form>
+        <div className="modal-overlay" onClick={closeForm}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add Incoming</h3>
+              <button type="button" className="modal-close" onClick={closeForm}>
+                ✕
+              </button>
+            </div>
+            <form
+              className="entry-form modal-form"
+              onSubmit={(e) => void onAddIncoming(e)}
+            >
+              <input name="incoming" placeholder="Incoming" required />
+              <input name="paidBy" placeholder="PaidBy" required />
+              <OptionPicker
+                kind="incomeType"
+                label="Income Type"
+                name="incomeType"
+                value={incomingType}
+                options={toOptionValues(userOptions?.incomeType)}
+                placeholder="IncomeType"
+                required
+                onChange={setIncomingType}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <OptionPicker
+                kind="account"
+                label="Account"
+                name="account"
+                value={incomingAccount}
+                options={toOptionValues(userOptions?.account)}
+                placeholder="Account"
+                required
+                onChange={setIncomingAccount}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <input name="amount" placeholder="Amount" required />
+              <input
+                name="date"
+                type="date"
+                defaultValue={todayIsoDate}
+                required
+              />
+              <input name="monthYear" placeholder="MonthYear" required />
+              <input name="notes" placeholder="Notes" />
+              <input name="comments" placeholder="Comments" />
+              <button
+                type="submit"
+                className="save-plus-btn"
+                aria-label="Save incoming"
+                disabled={saving}
+              >
+                +
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
-      <datalist id="expenseType-options">
-        {(userOptions?.expenseType ?? []).map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-      <datalist id="account-options">
-        {(userOptions?.account ?? []).map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-      <datalist id="category-options">
-        {(userOptions?.category ?? []).map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-      <datalist id="incomeType-options">
-        {(userOptions?.incomeType ?? []).map((value) => (
-          <option key={value} value={value} />
-        ))}
-      </datalist>
-
       {formType === "recurring" && (
-        <form className="entry-form" onSubmit={(e) => void onAddRecurring(e)}>
-          <input name="status" placeholder="Status" required />
-          <input name="name" placeholder="Name" required />
-          <input name="type" placeholder="Type" required />
-          <input name="price" placeholder="Price" required />
-          <input name="frequency" placeholder="Frequency" required />
-          <input name="dayOfMonth" placeholder="Day of Month" required />
-          <input name="paidBy" placeholder="Paid By" required />
-          <input name="category" placeholder="Category" required />
-          <input name="paidTo" placeholder="Paid To" required />
-          <input name="notes" placeholder="Notes" />
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Recurring"}
-          </button>
-          <button type="button" onClick={() => setFormType(null)}>
-            Cancel
-          </button>
-        </form>
+        <div className="modal-overlay" onClick={closeForm}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add Recurring</h3>
+              <button type="button" className="modal-close" onClick={closeForm}>
+                ✕
+              </button>
+            </div>
+            <form
+              className="entry-form modal-form"
+              onSubmit={(e) => void onAddRecurring(e)}
+            >
+              <input name="status" placeholder="Status" required />
+              <input name="name" placeholder="Name" required />
+              <input name="type" placeholder="Type" required />
+              <input name="price" placeholder="Price" required />
+              <input name="frequency" placeholder="Frequency" required />
+              <input name="dayOfMonth" placeholder="Day of Month" required />
+              <input name="paidBy" placeholder="Paid By" required />
+              <OptionPicker
+                kind="category"
+                label="Category"
+                name="category"
+                value={recurringCategory}
+                options={toOptionValues(userOptions?.category)}
+                placeholder="Category"
+                required
+                onChange={setRecurringCategory}
+                onCreateOption={saveOption.bind(null, addUserOption)}
+              />
+              <input name="paidTo" placeholder="Paid To" required />
+              <input name="notes" placeholder="Notes" />
+              <button
+                type="submit"
+                className="save-plus-btn"
+                aria-label="Save recurring"
+                disabled={saving}
+              >
+                +
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </>
   );

@@ -1,13 +1,21 @@
 import { handleDeleteIncoming, handleStartEditIncoming, handleUpdateIncoming } from "./actions";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { EditableRowActions } from "../components/EditableRowActions";
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { getOptionColor, toOptionValues } from "../helpers/options";
+import { useAutoLoadMore } from "../hooks/useAutoLoadMore";
+import { OptionPicker } from "../components/OptionPicker";
 import type { EditValues } from "../types/workspace";
-import { incomingHeaders } from "../types/schema";
+import { formatDisplayDate } from "../helpers/dates";
 import { api } from "../../convex/_generated/api";
+import { CreditCard } from "lucide-react";
+import { saveOption } from "./actions";
 import { useState } from "react";
 
 export function Incomings() {
   const [editingIncomingId, setEditingIncomingId] = useState<string | null>(
+    null,
+  );
+  const [expandedIncomingId, setExpandedIncomingId] = useState<string | null>(
     null,
   );
   const [editValues, setEditValues] = useState<EditValues>({});
@@ -15,195 +23,65 @@ export function Incomings() {
 
   const updateIncoming = useMutation(api.incomings.update);
   const deleteIncoming = useMutation(api.incomings.remove);
+  const addUserOption = useMutation(api.userOptions.add);
+  const userOptions = useQuery(api.userOptions.list);
 
   const {
     results: incomings,
     status: incomingsStatus,
     loadMore: loadMoreIncomings,
   } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 25 });
+  useAutoLoadMore(incomingsStatus, () => loadMoreIncomings(25));
 
   return (
     <>
-      <table>
-        <thead>
-          <tr>
-            {incomingHeaders.map((header) => (
-              <th key={header}>{header}</th>
-            ))}
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {incomings.length === 0 ? (
-            <tr>
-              <td colSpan={incomingHeaders.length}>No incomings yet.</td>
-            </tr>
-          ) : (
-            incomings.map((row) => {
-              const isEditing = editingIncomingId === row._id;
-              return (
-                <tr key={row._id}>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.incoming ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            incoming: e.target.value,
-                          }))
-                        }
+      {incomings.length === 0 ? (
+        <p>No incomings yet.</p>
+      ) : (
+        <div className="entry-card-list">
+          {incomings.map((row) => {
+            const isExpanded = expandedIncomingId === row._id;
+            const isEditing = editingIncomingId === row._id;
+            const incomeTypeColor = getOptionColor(
+              userOptions,
+              "incomeType",
+              row.incomeType,
+            );
+            const accountColor = getOptionColor(userOptions, "account", row.account);
+
+            return (
+              <div
+                key={row._id}
+                className={`entry-card${isExpanded ? " is-expanded" : ""}`}
+              >
+                <div className="entry-card-main">
+                  <div className="entry-card-primary">
+                    <div className="entry-card-amount">
+                      <CreditCard
+                        className="entry-card-account-icon"
+                        style={{ color: accountColor }}
+                        aria-hidden="true"
                       />
-                    ) : (
-                      row.incoming
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.paidBy ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            paidBy: e.target.value,
-                          }))
-                        }
+                      <span>₪{row.amount}</span>
+                    </div>
+                    <span className="entry-card-primary-divider" aria-hidden="true" />
+                    <div className="entry-card-title-wrap">
+                      <span className="entry-card-title">{row.incoming}</span>
+                      <span
+                        className="entry-card-color-dot"
+                        style={{ backgroundColor: incomeTypeColor }}
                       />
-                    ) : (
-                      row.paidBy
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.incomeType ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            incomeType: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.incomeType
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.account ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            account: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.account
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.amount ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            amount: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.amount
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        value={editValues.date ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({ ...v, date: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      row.date
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.monthYear ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            monthYear: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.monthYear
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.notes ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            notes: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      (row.notes ?? "")
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.comments ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            comments: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      (row.comments ?? "")
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.incomingId ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            incomingId: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.incomingId
-                    )}
-                  </td>
-                  <td className="actions">
+                    </div>
+                  </div>
+                  <div className="entry-card-date">
+                    {formatDisplayDate(row.date)}
+                  </div>
+                  <div className="entry-row-controls">
                     <EditableRowActions
-                      isEditing={isEditing}
+                      isEditing={false}
                       saving={saving}
-                      onSave={() =>
-                        handleUpdateIncoming(row, {
-                          updateIncoming,
-                          editValues,
-                          setSaving,
-                          setEditingIncomingId,
-                        })
-                      }
-                      onCancel={() => setEditingIncomingId(null)}
+                      onSave={() => {}}
+                      onCancel={() => {}}
                       onEdit={() =>
                         handleStartEditIncoming(
                           row,
@@ -215,18 +93,175 @@ export function Incomings() {
                         handleDeleteIncoming(row, deleteIncoming, setSaving)
                       }
                     />
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-      {incomingsStatus === "CanLoadMore" ? (
-        <button type="button" onClick={() => loadMoreIncomings(25)}>
-          Load More Incomings
-        </button>
-      ) : null}
+                    <button
+                      type="button"
+                      className="icon-action-btn"
+                      onClick={() =>
+                        setExpandedIncomingId((prev) =>
+                          prev === row._id ? null : row._id)
+                      }
+                    >
+                      {isExpanded ? "▴" : "▾"}
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded ? (
+                  <div className="entry-card-details">
+                    <div className="entry-detail-grid static">
+                      <div>
+                        <strong>Income Type:</strong> {row.incomeType}
+                      </div>
+                      <div>
+                        <strong>Paid By:</strong> {row.paidBy}
+                      </div>
+                      <div>
+                        <strong>Account:</strong> {row.account}
+                      </div>
+                      <div>
+                        <strong>Month/Year:</strong> {row.monthYear}
+                      </div>
+                      <div>
+                        <strong>Notes:</strong> {row.notes ?? "-"}
+                      </div>
+                      <div>
+                        <strong>Comments:</strong> {row.comments ?? "-"}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {isEditing ? (
+                  <div
+                    className="modal-overlay"
+                    onClick={() => setEditingIncomingId(null)}
+                  >
+                    <div
+                      className="modal-card"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="modal-header">
+                        <h3>Edit Incoming</h3>
+                        <button
+                          type="button"
+                          className="modal-close"
+                          onClick={() => setEditingIncomingId(null)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="entry-form modal-form">
+                        <input
+                          value={editValues.incoming ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              incoming: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.paidBy ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              paidBy: e.target.value,
+                            }))
+                          }
+                        />
+                        <OptionPicker
+                          kind="incomeType"
+                          label="Income Type"
+                          value={editValues.incomeType ?? ""}
+                          options={toOptionValues(userOptions?.incomeType)}
+                          placeholder="Income Type"
+                          onChange={(value) =>
+                            setEditValues((v) => ({ ...v, incomeType: value }))
+                          }
+                          onCreateOption={saveOption.bind(null, addUserOption)}
+                        />
+                        <OptionPicker
+                          kind="account"
+                          label="Account"
+                          value={editValues.account ?? ""}
+                          options={toOptionValues(userOptions?.account)}
+                          placeholder="Account"
+                          onChange={(value) =>
+                            setEditValues((v) => ({ ...v, account: value }))
+                          }
+                          onCreateOption={saveOption.bind(null, addUserOption)}
+                        />
+                        <input
+                          value={editValues.amount ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              amount: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          type="date"
+                          value={editValues.date ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              date: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.monthYear ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              monthYear: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.notes ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              notes: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.comments ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              comments: e.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="save-plus-btn"
+                          aria-label="Save incoming changes"
+                          disabled={saving}
+                          onClick={() =>
+                            handleUpdateIncoming(row, {
+                              updateIncoming,
+                              editValues,
+                              setSaving,
+                              setEditingIncomingId,
+                            })
+                          }
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

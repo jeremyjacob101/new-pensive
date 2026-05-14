@@ -58,10 +58,10 @@ export function LeftMenuPanel({
 }
 
 function menuIcon(key: MenuItemKey): ReactNode {
-  if (key === "expenses") return "E";
-  if (key === "incomings") return "I";
-  if (key === "recurrings") return "R";
-  return "O";
+  if (key === "expenses") return <ExpensesGlyph />;
+  if (key === "incomings") return <IncomingsGlyph />;
+  if (key === "recurrings") return <RecurringsGlyph />;
+  return <OptionsGlyph />;
 }
 
 function UserGlyph() {
@@ -71,6 +71,75 @@ function UserGlyph() {
         d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z"
         fill="currentColor"
       />
+    </svg>
+  );
+}
+
+function ExpensesGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M6 18 17 7m0 0h-6m6 0v6"
+        fill="none"
+        stroke="#ef4444"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IncomingsGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M18 6 7 17m0 0h6m-6 0v-6"
+        fill="none"
+        stroke="#22c55e"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function RecurringsGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M20 8a8 8 0 1 0 2 5.3"
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 4v4h-4"
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function OptionsGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M4 6h16M4 12h16M4 18h16"
+        fill="none"
+        stroke="#ec4899"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="9" cy="6" r="2.2" fill="#ec4899" />
+      <circle cx="15" cy="12" r="2.2" fill="#ec4899" />
+      <circle cx="11" cy="18" r="2.2" fill="#ec4899" />
     </svg>
   );
 }

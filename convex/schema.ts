@@ -50,6 +50,7 @@ export default defineSchema({
       v.literal("incomeType"),
     ),
     value: v.string(),
+    color: v.optional(v.string()),
   })
     .index("by_user_kind", ["userId", "kind"])
     .index("by_user_kind_value", ["userId", "kind", "value"]),

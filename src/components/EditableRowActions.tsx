@@ -28,11 +28,28 @@ export function EditableRowActions({
 
   return (
     <>
-      <button type="button" onClick={onEdit}>
-        Edit
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label="Edit"
+        className="icon-action-btn"
+      >
+        ✎
       </button>
-      <button type="button" onClick={() => void onDelete()} disabled={saving}>
-        Delete
+      <button
+        type="button"
+        onClick={() => {
+          const confirmed = window.confirm(
+            "Are you sure you want to delete this item? This action cannot be undone.",
+          );
+          if (!confirmed) return;
+          void onDelete();
+        }}
+        disabled={saving}
+        aria-label="Delete"
+        className="icon-action-btn danger"
+      >
+        ✕
       </button>
     </>
   );

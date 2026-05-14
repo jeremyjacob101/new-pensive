@@ -1,204 +1,85 @@
 import { handleDeleteExpense, handleStartEditExpense, handleUpdateExpense } from "./actions";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { EditableRowActions } from "../components/EditableRowActions";
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { getOptionColor, toOptionValues } from "../helpers/options";
+import { useAutoLoadMore } from "../hooks/useAutoLoadMore";
+import { OptionPicker } from "../components/OptionPicker";
 import type { EditValues } from "../types/workspace";
+import { formatDisplayDate } from "../helpers/dates";
 import { api } from "../../convex/_generated/api";
-import { expenseHeaders } from "../types/schema";
+import { CreditCard } from "lucide-react";
+import { saveOption } from "./actions";
 import { useState } from "react";
 
 export function Expenses() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(
+    null,
+  );
   const [editValues, setEditValues] = useState<EditValues>({});
   const [saving, setSaving] = useState(false);
 
   const updateExpense = useMutation(api.expenses.update);
   const deleteExpense = useMutation(api.expenses.remove);
+  const addUserOption = useMutation(api.userOptions.add);
+  const userOptions = useQuery(api.userOptions.list);
 
   const {
     results: expenses,
     status: expensesStatus,
     loadMore: loadMoreExpenses,
   } = usePaginatedQuery(api.expenses.list, {}, { initialNumItems: 25 });
+  useAutoLoadMore(expensesStatus, () => loadMoreExpenses(25));
 
   return (
     <>
-      <table>
-        <thead>
-          <tr>
-            {expenseHeaders.map((header) => (
-              <th key={header}>{header}</th>
-            ))}
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {expenses.length === 0 ? (
-            <tr>
-              <td colSpan={expenseHeaders.length}>No expenses yet.</td>
-            </tr>
-          ) : (
-            expenses.map((row) => {
-              const isEditing = editingExpenseId === row._id;
-              return (
-                <tr key={row._id}>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.expense ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            expense: e.target.value,
-                          }))
-                        }
+      {expenses.length === 0 ? (
+        <p>No expenses yet.</p>
+      ) : (
+        <div className="entry-card-list">
+          {expenses.map((row) => {
+            const isExpanded = expandedExpenseId === row._id;
+            const isEditing = editingExpenseId === row._id;
+            const typeColor = getOptionColor(
+              userOptions,
+              "expenseType",
+              row.type,
+            );
+            const accountColor = getOptionColor(userOptions, "account", row.account);
+
+            return (
+              <div
+                key={row._id}
+                className={`entry-card${isExpanded ? " is-expanded" : ""}`}
+              >
+                <div className="entry-card-main">
+                  <div className="entry-card-primary">
+                    <div className="entry-card-amount">
+                      <CreditCard
+                        className="entry-card-account-icon"
+                        style={{ color: accountColor }}
+                        aria-hidden="true"
                       />
-                    ) : (
-                      row.expense
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.type ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({ ...v, type: e.target.value }))
-                        }
+                      <span>₪{row.amount}</span>
+                    </div>
+                    <span className="entry-card-primary-divider" aria-hidden="true" />
+                    <div className="entry-card-title-wrap">
+                      <span className="entry-card-title">{row.expense}</span>
+                      <span
+                        className="entry-card-color-dot"
+                        style={{ backgroundColor: typeColor }}
                       />
-                    ) : (
-                      row.type
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.account ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            account: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.account
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.category ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            category: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.category
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.amount ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            amount: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.amount
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        value={editValues.date ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({ ...v, date: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      row.date
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.paidTo ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            paidTo: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.paidTo
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.notes ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            notes: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      (row.notes ?? "")
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.comments ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            comments: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      (row.comments ?? "")
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        value={editValues.expenseId ?? ""}
-                        onChange={(e) =>
-                          setEditValues((v) => ({
-                            ...v,
-                            expenseId: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      row.expenseId
-                    )}
-                  </td>
-                  <td className="actions">
+                    </div>
+                  </div>
+                  <div className="entry-card-date">
+                    {formatDisplayDate(row.date)}
+                  </div>
+                  <div className="entry-row-controls">
                     <EditableRowActions
-                      isEditing={isEditing}
+                      isEditing={false}
                       saving={saving}
-                      onSave={() =>
-                        handleUpdateExpense(row, {
-                          updateExpense,
-                          editValues,
-                          setSaving,
-                          setEditingExpenseId,
-                        })
-                      }
-                      onCancel={() => setEditingExpenseId(null)}
+                      onSave={() => {}}
+                      onCancel={() => {}}
                       onEdit={() =>
                         handleStartEditExpense(
                           row,
@@ -210,18 +91,178 @@ export function Expenses() {
                         handleDeleteExpense(row, deleteExpense, setSaving)
                       }
                     />
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-      {expensesStatus === "CanLoadMore" ? (
-        <button type="button" onClick={() => loadMoreExpenses(25)}>
-          Load More Expenses
-        </button>
-      ) : null}
+                    <button
+                      type="button"
+                      className="icon-action-btn"
+                      onClick={() =>
+                        setExpandedExpenseId((prev) =>
+                          prev === row._id ? null : row._id)
+                      }
+                      aria-label={isExpanded ? "Collapse row" : "Expand row"}
+                    >
+                      {isExpanded ? "▴" : "▾"}
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded ? (
+                  <div className="entry-card-details">
+                    <div className="entry-detail-grid static">
+                      <div>
+                        <strong>Type:</strong> {row.type}
+                      </div>
+                      <div>
+                        <strong>Account:</strong> {row.account}
+                      </div>
+                      <div>
+                        <strong>Category:</strong> {row.category}
+                      </div>
+                      <div>
+                        <strong>Paid To:</strong> {row.paidTo}
+                      </div>
+                      <div>
+                        <strong>Notes:</strong> {row.notes ?? "-"}
+                      </div>
+                      <div>
+                        <strong>Comments:</strong> {row.comments ?? "-"}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {isEditing ? (
+                  <div
+                    className="modal-overlay"
+                    onClick={() => setEditingExpenseId(null)}
+                  >
+                    <div
+                      className="modal-card"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="modal-header">
+                        <h3>Edit Expense</h3>
+                        <button
+                          type="button"
+                          className="modal-close"
+                          onClick={() => setEditingExpenseId(null)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="entry-form modal-form">
+                        <input
+                          value={editValues.expense ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              expense: e.target.value,
+                            }))
+                          }
+                        />
+                        <OptionPicker
+                          kind="expenseType"
+                          label="Expense Type"
+                          value={editValues.type ?? ""}
+                          options={toOptionValues(userOptions?.expenseType)}
+                          placeholder="Type"
+                          onChange={(value) =>
+                            setEditValues((v) => ({ ...v, type: value }))
+                          }
+                          onCreateOption={saveOption.bind(null, addUserOption)}
+                        />
+                        <OptionPicker
+                          kind="account"
+                          label="Account"
+                          value={editValues.account ?? ""}
+                          options={toOptionValues(userOptions?.account)}
+                          placeholder="Account"
+                          onChange={(value) =>
+                            setEditValues((v) => ({ ...v, account: value }))
+                          }
+                          onCreateOption={saveOption.bind(null, addUserOption)}
+                        />
+                        <OptionPicker
+                          kind="category"
+                          label="Category"
+                          value={editValues.category ?? ""}
+                          options={toOptionValues(userOptions?.category)}
+                          placeholder="Category"
+                          onChange={(value) =>
+                            setEditValues((v) => ({ ...v, category: value }))
+                          }
+                          onCreateOption={saveOption.bind(null, addUserOption)}
+                        />
+                        <input
+                          value={editValues.amount ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              amount: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          type="date"
+                          value={editValues.date ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              date: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.paidTo ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              paidTo: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.notes ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              notes: e.target.value,
+                            }))
+                          }
+                        />
+                        <input
+                          value={editValues.comments ?? ""}
+                          onChange={(e) =>
+                            setEditValues((v) => ({
+                              ...v,
+                              comments: e.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="save-plus-btn"
+                          aria-label="Save expense changes"
+                          disabled={saving}
+                          onClick={() =>
+                            handleUpdateExpense(row, {
+                              updateExpense,
+                              editValues,
+                              setSaving,
+                              setEditingExpenseId,
+                            })
+                          }
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
