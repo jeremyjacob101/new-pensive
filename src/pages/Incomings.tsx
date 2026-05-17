@@ -43,8 +43,8 @@ export function Incomings() {
     results: incomings,
     status: incomingsStatus,
     loadMore: loadMoreIncomings,
-  } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 100 });
-  useAutoLoadMore(incomingsStatus, () => loadMoreIncomings(100));
+  } = usePaginatedQuery(api.incomings.list, {}, { initialNumItems: 50 });
+  useAutoLoadMore(incomingsStatus, () => loadMoreIncomings(50));
 
   const displayItems = useMemo(() => {
     const groupedMap = new Map<

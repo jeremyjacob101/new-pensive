@@ -36,8 +36,8 @@ export function Recurrings() {
     results: recurrings,
     status: recurringsStatus,
     loadMore: loadMoreRecurrings,
-  } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 100 });
-  useAutoLoadMore(recurringsStatus, () => loadMoreRecurrings(100));
+  } = usePaginatedQuery(api.recurrings.list, {}, { initialNumItems: 50 });
+  useAutoLoadMore(recurringsStatus, () => loadMoreRecurrings(50));
 
   const expenseRecurrings = recurrings.filter(
     (row) => (row.kind ?? "expense") === "expense",
