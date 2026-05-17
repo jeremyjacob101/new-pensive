@@ -260,6 +260,14 @@ export function Incomings() {
                   "incomeType",
                   firstRow.incomeType,
                 );
+                const incomeSubtypeColor = firstRow.incomeSubtype
+                  ? getOptionColor(
+                      userOptions,
+                      "incomeSubtype",
+                      firstRow.incomeSubtype,
+                    )
+                  : null;
+                const dotColor = incomeSubtypeColor ?? typeColor;
                 const amountTooltip = group.rows
                   .map(
                     (row) =>
@@ -284,20 +292,18 @@ export function Incomings() {
                             style={{ color: accountColor }}
                             aria-hidden="true"
                           />
-                          <span>{formatMoney(group.totalAmount)}</span>
-                          <span className="entry-card-effective-amount">
-                            {formatMoney(group.totalEffectiveAmount)} effective
-                          </span>
+                          <span>{formatMoney(group.totalEffectiveAmount)}</span>
                         </div>
                         <span
                           className="entry-card-primary-divider"
+                          style={{ backgroundColor: typeColor, opacity: 0.8 }}
                           aria-hidden="true"
                         />
                         <div className="entry-card-title-wrap">
                           <span className="entry-card-title">{groupTitle}</span>
                           <span
                             className="entry-card-color-dot"
-                            style={{ backgroundColor: typeColor }}
+                            style={{ backgroundColor: dotColor }}
                           />
                         </div>
                       </div>
@@ -310,11 +316,19 @@ export function Incomings() {
                     <div className="entry-card-details grouped-expense-details">
                       {group.rows.map((row, index) => {
                         const isEditing = editingIncomingId === row._id;
-                        const rowTypeColor = getOptionColor(
+                        const incomeTypeColor = getOptionColor(
                           userOptions,
                           "incomeType",
                           row.incomeType,
                         );
+                        const incomeSubtypeColor = row.incomeSubtype
+                          ? getOptionColor(
+                              userOptions,
+                              "incomeSubtype",
+                              row.incomeSubtype,
+                            )
+                          : null;
+                        const dotColor = incomeSubtypeColor ?? incomeTypeColor;
 
                         return (
                           <div
@@ -333,7 +347,7 @@ export function Incomings() {
                                 </span>
                                 <span
                                   className="entry-card-color-dot"
-                                  style={{ backgroundColor: rowTypeColor }}
+                                  style={{ backgroundColor: dotColor }}
                                 />
                               </div>
                               <div className="grouped-expense-row-meta">
@@ -589,6 +603,14 @@ export function Incomings() {
                 "incomeType",
                 row.incomeType,
               );
+              const incomeSubtypeColor = row.incomeSubtype
+                ? getOptionColor(
+                    userOptions,
+                    "incomeSubtype",
+                    row.incomeSubtype,
+                  )
+                : null;
+              const dotColor = incomeSubtypeColor ?? incomeTypeColor;
               const accountColor = getOptionColor(
                 userOptions,
                 "account",
@@ -614,20 +636,21 @@ export function Incomings() {
                           style={{ color: accountColor }}
                           aria-hidden="true"
                         />
-                        <span>{formatMoney(row.amount)}</span>
-                        <span className="entry-card-effective-amount">
-                          {formatMoney(getEffectiveAmount(row))} effective
-                        </span>
+                        <span>{formatMoney(getEffectiveAmount(row))}</span>
                       </div>
                       <span
                         className="entry-card-primary-divider"
+                        style={{
+                          backgroundColor: incomeTypeColor,
+                          opacity: 0.8,
+                        }}
                         aria-hidden="true"
                       />
                       <div className="entry-card-title-wrap">
                         <span className="entry-card-title">{row.incoming}</span>
                         <span
                           className="entry-card-color-dot"
-                          style={{ backgroundColor: incomeTypeColor }}
+                          style={{ backgroundColor: dotColor }}
                         />
                       </div>
                     </div>
@@ -692,6 +715,9 @@ export function Incomings() {
                               }).format(parsed);
                             })
                             .join(", ") || "-"}
+                        </div>
+                        <div>
+                          <strong>Amount:</strong> {formatMoney(row.amount)}
                         </div>
                         <div>
                           <strong>Effective:</strong>{" "}

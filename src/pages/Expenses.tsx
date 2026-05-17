@@ -265,6 +265,19 @@ export function Expenses() {
                   "expenseType",
                   firstRow.type,
                 );
+                const categoryColor = getOptionColor(
+                  userOptions,
+                  "category",
+                  firstRow.category,
+                );
+                const subcategoryColor = firstRow.subcategory
+                  ? getOptionColor(
+                      userOptions,
+                      "subcategory",
+                      firstRow.subcategory,
+                    )
+                  : null;
+                const dotColor = subcategoryColor ?? categoryColor;
                 const amountTooltip = group.rows
                   .map(
                     (row) =>
@@ -289,20 +302,18 @@ export function Expenses() {
                             style={{ color: accountColor }}
                             aria-hidden="true"
                           />
-                          <span>{formatMoney(group.totalAmount)}</span>
-                          <span className="entry-card-effective-amount">
-                            {formatMoney(group.totalEffectiveAmount)} effective
-                          </span>
+                          <span>{formatMoney(group.totalEffectiveAmount)}</span>
                         </div>
                         <span
                           className="entry-card-primary-divider"
+                          style={{ backgroundColor: typeColor, opacity: 0.8 }}
                           aria-hidden="true"
                         />
                         <div className="entry-card-title-wrap">
                           <span className="entry-card-title">{groupTitle}</span>
                           <span
                             className="entry-card-color-dot"
-                            style={{ backgroundColor: typeColor }}
+                            style={{ backgroundColor: dotColor }}
                           />
                         </div>
                       </div>
@@ -361,11 +372,19 @@ export function Expenses() {
                     <div className="entry-card-details grouped-expense-details">
                       {group.rows.map((row, index) => {
                         const isEditing = editingExpenseId === row._id;
-                        const rowTypeColor = getOptionColor(
+                        const categoryColor = getOptionColor(
                           userOptions,
-                          "expenseType",
-                          row.type,
+                          "category",
+                          row.category,
                         );
+                        const subcategoryColor = row.subcategory
+                          ? getOptionColor(
+                              userOptions,
+                              "subcategory",
+                              row.subcategory,
+                            )
+                          : null;
+                        const dotColor = subcategoryColor ?? categoryColor;
 
                         return (
                           <div
@@ -384,7 +403,7 @@ export function Expenses() {
                                 </span>
                                 <span
                                   className="entry-card-color-dot"
-                                  style={{ backgroundColor: rowTypeColor }}
+                                  style={{ backgroundColor: dotColor }}
                                 />
                               </div>
                               <div className="grouped-expense-row-meta">
@@ -659,6 +678,15 @@ export function Expenses() {
                 "expenseType",
                 row.type,
               );
+              const categoryColor = getOptionColor(
+                userOptions,
+                "category",
+                row.category,
+              );
+              const subcategoryColor = row.subcategory
+                ? getOptionColor(userOptions, "subcategory", row.subcategory)
+                : null;
+              const dotColor = subcategoryColor ?? categoryColor;
               const accountColor = getOptionColor(
                 userOptions,
                 "account",
@@ -684,20 +712,18 @@ export function Expenses() {
                           style={{ color: accountColor }}
                           aria-hidden="true"
                         />
-                        <span>{formatMoney(row.amount)}</span>
-                        <span className="entry-card-effective-amount">
-                          {formatMoney(getEffectiveAmount(row))} effective
-                        </span>
+                        <span>{formatMoney(getEffectiveAmount(row))}</span>
                       </div>
                       <span
                         className="entry-card-primary-divider"
+                        style={{ backgroundColor: typeColor, opacity: 0.8 }}
                         aria-hidden="true"
                       />
                       <div className="entry-card-title-wrap">
                         <span className="entry-card-title">{row.expense}</span>
                         <span
                           className="entry-card-color-dot"
-                          style={{ backgroundColor: typeColor }}
+                          style={{ backgroundColor: dotColor }}
                         />
                       </div>
                     </div>
@@ -767,6 +793,9 @@ export function Expenses() {
                               }).format(parsed);
                             })
                             .join(", ") || "-"}
+                        </div>
+                        <div>
+                          <strong>Amount:</strong> {formatMoney(row.amount)}
                         </div>
                         <div>
                           <strong>Effective:</strong>{" "}

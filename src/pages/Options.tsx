@@ -276,7 +276,7 @@ export function Options() {
                             void setUserOptionDefault({
                               kind: key,
                               value: option.value,
-                              isDefault: true,
+                              isDefault: !option.isDefault,
                             })
                           }
                         >
@@ -405,7 +405,7 @@ export function Options() {
                                 kind: childKind!,
                                 value: child.value,
                                 parentValue: option.value,
-                                isDefault: true,
+                                isDefault: !child.isDefault,
                               })
                             }
                           >
