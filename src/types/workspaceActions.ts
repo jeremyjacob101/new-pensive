@@ -14,6 +14,7 @@ export type WorkspaceMutations = {
     amount: number;
     effectiveAmount?: number;
     effectiveAmountMode?: "auto" | "manual";
+    monthYears?: string[];
     date: string;
     paidTo: string;
     notes?: string;
@@ -32,7 +33,7 @@ export type WorkspaceMutations = {
     effectiveAmount?: number;
     effectiveAmountMode?: "auto" | "manual";
     date: string;
-    monthYear: string;
+    monthYears?: string[];
     notes?: string;
     comments?: string;
     incomingId: string;
@@ -81,6 +82,7 @@ export type WorkspaceMutations = {
     amount: number;
     effectiveAmount?: number;
     effectiveAmountMode?: "auto" | "manual";
+    monthYears?: string[];
     date: string;
     paidTo: string;
     notes?: string;
@@ -101,7 +103,7 @@ export type WorkspaceMutations = {
     effectiveAmount?: number;
     effectiveAmountMode?: "auto" | "manual";
     date: string;
-    monthYear: string;
+    monthYears?: string[];
     notes?: string;
     comments?: string;
     incomingId: string;

@@ -1,9 +1,11 @@
+import { formatMonthLabel, formatShortDisplayDate, formatYearLabel, parseMonthYears } from "../helpers/dates";
 import { handleDeleteExpense, handleStartEditExpense, handleUpdateExpense } from "./actions";
-import { formatMonthLabel, formatShortDisplayDate, formatYearLabel } from "../helpers/dates";
 import { getOptionColor, getScopedOptionValues, toOptionValues } from "../helpers/options";
 import { EffectiveAmountControls } from "../components/EffectiveAmountControls";
 import { ExpensePaybackLinkManager } from "../components/PaybackLinkManager";
 import { useScrollMonthIndicator } from "../hooks/useScrollMonthIndicator";
+import { MonthYearMultiSelect } from "../components/MonthYearMultiSelect";
+import { formatMoney, getEffectiveAmount } from "../helpers/formatters";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { EditableRowActions } from "../components/EditableRowActions";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -15,14 +17,6 @@ import { useMemo, useRef, useState } from "react";
 import { parseSubId } from "../helpers/subId";
 import { CreditCard } from "lucide-react";
 import { saveOption } from "./actions";
-
-function getEffectiveAmount(row: { amount: number; effectiveAmount?: number }) {
-  return row.effectiveAmount ?? row.amount;
-}
-
-function formatMoney(value: number) {
-  return `₪${value.toLocaleString("en-US")}`;
-}
 
 export function Expenses() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
@@ -584,6 +578,19 @@ export function Expenses() {
                                         }))
                                       }
                                     />
+                                    <MonthYearMultiSelect
+                                      value={parseMonthYears(
+                                        editValues.monthYears,
+                                        editValues.date ?? row.date,
+                                      )}
+                                      onChange={(value) =>
+                                        setEditValues((v) => ({
+                                          ...v,
+                                          monthYears: JSON.stringify(value),
+                                        }))
+                                      }
+                                      required
+                                    />
                                     <input
                                       value={editValues.paidTo ?? ""}
                                       onChange={(e) =>
@@ -749,6 +756,19 @@ export function Expenses() {
                           <strong>Paid To:</strong> {row.paidTo}
                         </div>
                         <div>
+                          <strong>Months:</strong>{" "}
+                          {(row.monthYears ?? [])
+                            .map((month) => {
+                              const parsed = new Date(`${month}-01T00:00:00`);
+                              if (Number.isNaN(parsed.getTime())) return month;
+                              return new Intl.DateTimeFormat("en-US", {
+                                month: "long",
+                                year: "numeric",
+                              }).format(parsed);
+                            })
+                            .join(", ") || "-"}
+                        </div>
+                        <div>
                           <strong>Effective:</strong>{" "}
                           {formatMoney(getEffectiveAmount(row))}
                         </div>
@@ -894,6 +914,19 @@ export function Expenses() {
                                 date: e.target.value,
                               }))
                             }
+                          />
+                          <MonthYearMultiSelect
+                            value={parseMonthYears(
+                              editValues.monthYears,
+                              editValues.date ?? row.date,
+                            )}
+                            onChange={(value) =>
+                              setEditValues((v) => ({
+                                ...v,
+                                monthYears: JSON.stringify(value),
+                              }))
+                            }
+                            required
                           />
                           <input
                             value={editValues.paidTo ?? ""}

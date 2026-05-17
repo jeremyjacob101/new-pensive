@@ -1,3 +1,4 @@
+import { getMonthFromIsoDate, parseMonthYears } from "../helpers/dates";
 import type { Dispatch, SetStateAction, SyntheticEvent } from "react";
 import type { WorkspaceMutations } from "../types/workspaceActions";
 import type { EditValues, FormType } from "../types/workspace";
@@ -36,6 +37,7 @@ export async function handleAddExpense(
   const form = new FormData(e.currentTarget);
   deps.setSaving(true);
   try {
+    const date = String(form.get("date") ?? "");
     await deps.createExpense({
       expense: String(form.get("expense") ?? ""),
       type: String(form.get("type") ?? ""),
@@ -43,7 +45,8 @@ export async function handleAddExpense(
       category: String(form.get("category") ?? ""),
       subcategory: String(form.get("subcategory") ?? "") || undefined,
       amount: toAmount(String(form.get("amount") ?? "")),
-      date: String(form.get("date") ?? ""),
+      monthYears: parseMonthYears(String(form.get("monthYears") ?? "[]"), date),
+      date,
       paidTo: String(form.get("paidTo") ?? ""),
       notes: String(form.get("notes") ?? "") || undefined,
       comments: String(form.get("comments") ?? "") || undefined,
@@ -96,6 +99,7 @@ export async function handleAddIncoming(
   const form = new FormData(e.currentTarget);
   deps.setSaving(true);
   try {
+    const date = String(form.get("date") ?? "");
     await deps.createIncoming({
       incoming: String(form.get("incoming") ?? ""),
       paidBy: String(form.get("paidBy") ?? ""),
@@ -103,8 +107,8 @@ export async function handleAddIncoming(
       incomeSubtype: String(form.get("incomeSubtype") ?? "") || undefined,
       account: String(form.get("account") ?? ""),
       amount: toAmount(String(form.get("amount") ?? "")),
-      date: String(form.get("date") ?? ""),
-      monthYear: String(form.get("monthYear") ?? ""),
+      date,
+      monthYears: parseMonthYears(String(form.get("monthYears") ?? "[]"), date),
       notes: String(form.get("notes") ?? "") || undefined,
       comments: String(form.get("comments") ?? "") || undefined,
       incomingId: randomId16(),
@@ -235,6 +239,9 @@ export function handleStartEditExpense(
     effectiveAmount: String(row.effectiveAmount ?? row.amount),
     effectiveAmountMode: row.effectiveAmountMode ?? "auto",
     date: row.date,
+    monthYears: JSON.stringify(
+      row.monthYears ?? [getMonthFromIsoDate(row.date)],
+    ),
     paidTo: row.paidTo,
     notes: row.notes ?? "",
     comments: row.comments ?? "",
@@ -258,7 +265,9 @@ export function handleStartEditIncoming(
     effectiveAmount: String(row.effectiveAmount ?? row.amount),
     effectiveAmountMode: row.effectiveAmountMode ?? "auto",
     date: row.date,
-    monthYear: row.monthYear,
+    monthYears: JSON.stringify(
+      row.monthYears ?? [getMonthFromIsoDate(row.date)],
+    ),
     notes: row.notes ?? "",
     comments: row.comments ?? "",
     incomingId: row.incomingId,
@@ -320,6 +329,10 @@ export async function handleUpdateExpense(
           : undefined,
       effectiveAmountMode:
         deps.editValues.effectiveAmountMode === "manual" ? "manual" : "auto",
+      monthYears: parseMonthYears(
+        deps.editValues.monthYears,
+        deps.editValues.date ?? row.date,
+      ),
       date: deps.editValues.date ?? "",
       paidTo: deps.editValues.paidTo ?? "",
       notes: deps.editValues.notes || undefined,
@@ -372,7 +385,10 @@ export async function handleUpdateIncoming(
       effectiveAmountMode:
         deps.editValues.effectiveAmountMode === "manual" ? "manual" : "auto",
       date: deps.editValues.date ?? "",
-      monthYear: deps.editValues.monthYear ?? "",
+      monthYears: parseMonthYears(
+        deps.editValues.monthYears,
+        deps.editValues.date ?? row.date,
+      ),
       notes: deps.editValues.notes || undefined,
       comments: deps.editValues.comments || undefined,
       incomingId: deps.editValues.incomingId ?? "",

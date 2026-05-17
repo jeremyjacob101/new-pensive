@@ -3,6 +3,7 @@ import type { SplitExpenseDraft, SplitIncomingDraft } from "../types/splitDrafts
 export function buildEmptySplitExpenseDraft(
   todayIsoDate: string,
 ): SplitExpenseDraft {
+  const month = todayIsoDate.slice(0, 7);
   return {
     expense: "",
     type: "",
@@ -11,6 +12,7 @@ export function buildEmptySplitExpenseDraft(
     subcategory: "",
     amount: "",
     date: todayIsoDate,
+    monthYears: month ? [month] : [],
     paidTo: "",
     notes: "",
     comments: "",
@@ -20,6 +22,7 @@ export function buildEmptySplitExpenseDraft(
 export function buildEmptySplitIncomingDraft(
   todayIsoDate: string,
 ): SplitIncomingDraft {
+  const month = todayIsoDate.slice(0, 7);
   return {
     incoming: "",
     paidBy: "",
@@ -28,7 +31,7 @@ export function buildEmptySplitIncomingDraft(
     account: "",
     amount: "",
     date: todayIsoDate,
-    monthYear: "",
+    monthYears: month ? [month] : [],
     notes: "",
     comments: "",
   };

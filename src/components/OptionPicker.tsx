@@ -1,6 +1,5 @@
+import { CREATE_NEW_OPTION_VALUE } from "../keys/optionPicker";
 import type { OptionKind } from "../types/schema";
-
-const CREATE_NEW_OPTION_VALUE = "__create_new_option__";
 
 export function OptionPicker({ kind, label, name, value, options, placeholder, required = false, disabled = false, onChange, onCreateOption, parentValue }: {
   kind: OptionKind;

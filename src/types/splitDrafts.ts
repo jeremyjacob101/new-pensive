@@ -6,6 +6,7 @@ export type SplitExpenseDraft = {
   subcategory: string;
   amount: string;
   date: string;
+  monthYears: string[];
   paidTo: string;
   notes: string;
   comments: string;
@@ -19,7 +20,7 @@ export type SplitIncomingDraft = {
   account: string;
   amount: string;
   date: string;
-  monthYear: string;
+  monthYears: string[];
   notes: string;
   comments: string;
 };

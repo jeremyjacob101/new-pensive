@@ -1,3 +1,5 @@
+import type { WarningResult } from "../types/payback";
+
 export function randomId16() {
   const alphabet =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -12,4 +14,20 @@ export function toAmount(value: string) {
   const cleaned = value.trim().replace(/[^0-9.-]/g, "");
   const n = Number(cleaned || "0");
   return Number.isFinite(n) ? n : 0;
+}
+
+export function formatMoney(value: number) {
+  return `₪${value.toLocaleString("en-US")}`;
+}
+
+export function formatWarnings(result: WarningResult | null | undefined) {
+  const warnings = result?.warnings ?? [];
+  return warnings.map((warning) => warning.message).join(" ");
+}
+
+export function getEffectiveAmount(row: {
+  amount: number;
+  effectiveAmount?: number;
+}) {
+  return row.effectiveAmount ?? row.amount;
 }

@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite --config config/vite.config.ts",
     "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p config/tsconfig.node.json && vite build --config config/vite.config.ts",
+    "dist": "sh -c 'npm run build; status=$?; rm -rf dist; exit $status'",
+    "clean:env-local": "rm -f .env.local",
+    "watch:env-local-clean": "sh -c 'while true; do rm -f .env.local; sleep 2; done'",
+    "clean:dist": "rm -rf dist",
     "lint": "eslint .",
     "format": "prettier --ignore-path config/.prettierignore --cache --write \"**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}\"",
     "format:check": "prettier --ignore-path config/.prettierignore --check \"**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}\"",

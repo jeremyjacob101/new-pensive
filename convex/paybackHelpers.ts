@@ -7,6 +7,7 @@ export type EffectiveAmountInput = {
   amount: number;
   effectiveAmount?: number;
   effectiveAmountMode?: EffectiveAmountMode;
+  monthYears?: string[];
 };
 
 export type PaybackAllocationWarning = {
@@ -22,12 +23,13 @@ export function normalizeEffectiveAmountFields(input: EffectiveAmountInput): {
   effectiveAmountMode: EffectiveAmountMode;
 } {
   const effectiveAmountMode = input.effectiveAmountMode ?? "auto";
+  const monthCount = Math.max(1, input.monthYears?.length ?? 1);
   return {
     effectiveAmountMode,
     effectiveAmount:
       effectiveAmountMode === "manual"
         ? (input.effectiveAmount ?? input.amount)
-        : input.amount,
+        : input.amount / monthCount,
   };
 }
 
@@ -76,7 +78,8 @@ export async function recomputeExpenseEffectiveAmount(
   }
 
   const allocated = await sumExpenseLinks(ctx, userId, expenseId);
-  const effectiveAmount = expense.amount - allocated;
+  const monthCount = Math.max(1, expense.monthYears?.length ?? 1);
+  const effectiveAmount = (expense.amount - allocated) / monthCount;
   await ctx.db.patch(expenseId, {
     effectiveAmount,
     effectiveAmountMode: "auto",
@@ -96,7 +99,8 @@ export async function recomputeIncomingEffectiveAmount(
   }
 
   const allocated = await sumIncomingLinks(ctx, userId, incomingId);
-  const effectiveAmount = incoming.amount - allocated;
+  const monthCount = Math.max(1, incoming.monthYears?.length ?? 1);
+  const effectiveAmount = (incoming.amount - allocated) / monthCount;
   await ctx.db.patch(incomingId, {
     effectiveAmount,
     effectiveAmountMode: "auto",

@@ -1,5 +1,6 @@
 import { deletePaybackLinksForExpense, normalizeEffectiveAmountFields, recomputeExpenseEffectiveAmount, type EffectiveAmountMode } from "./paybackHelpers";
 import { mutation, query, type MutationCtx } from "./_generated/server";
+import { normalizeMonthYearsInput } from "./monthYears";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
 import type { Id } from "./_generated/dataModel";
@@ -134,6 +135,7 @@ export const create = mutation({
     amount: v.number(),
     effectiveAmount: v.optional(v.number()),
     effectiveAmountMode: v.optional(effectiveAmountModeValidator),
+    monthYears: v.optional(v.array(v.string())),
     date: v.string(),
     paidTo: v.string(),
     notes: v.optional(v.string()),
@@ -147,12 +149,14 @@ export const create = mutation({
     const userId = await requireUserId(ctx);
     const expenseId = args.expenseId.trim() || randomId16();
     const shared = normalizeSharedFields(args);
-    const effective = normalizeEffectiveAmountFields(args);
+    const monthYears = normalizeMonthYearsInput(args.monthYears, args.date);
+    const effective = normalizeEffectiveAmountFields({ ...args, monthYears });
 
     return await ctx.db.insert("expenses", {
       ...args,
       ...shared,
       ...effective,
+      monthYears,
       expenseId,
       userId,
       date: normalizeDate(args.date),
@@ -172,6 +176,7 @@ export const bulkCreate = mutation({
         amount: v.number(),
         effectiveAmount: v.optional(v.number()),
         effectiveAmountMode: v.optional(effectiveAmountModeValidator),
+        monthYears: v.optional(v.array(v.string())),
         date: v.string(),
         paidTo: v.string(),
         notes: v.optional(v.string()),
@@ -188,12 +193,14 @@ export const bulkCreate = mutation({
     for (const row of rows) {
       const expenseId = row.expenseId.trim() || randomId16();
       const shared = normalizeSharedFields(row);
-      const effective = normalizeEffectiveAmountFields(row);
+      const monthYears = normalizeMonthYearsInput(row.monthYears, row.date);
+      const effective = normalizeEffectiveAmountFields({ ...row, monthYears });
 
       await ctx.db.insert("expenses", {
         ...row,
         ...shared,
         ...effective,
+        monthYears,
         expenseId,
         userId,
         date: normalizeDate(row.date),
@@ -231,6 +238,7 @@ export const update = mutation({
     amount: v.number(),
     effectiveAmount: v.optional(v.number()),
     effectiveAmountMode: v.optional(effectiveAmountModeValidator),
+    monthYears: v.optional(v.array(v.string())),
     date: v.string(),
     paidTo: v.string(),
     notes: v.optional(v.string()),
@@ -252,17 +260,19 @@ export const update = mutation({
 
     const expenseId = rest.expenseId.trim() || existing.expenseId;
     const shared = normalizeSharedFields(rest);
+    const monthYears = normalizeMonthYearsInput(rest.monthYears, rest.date);
     const nextEffectiveAmountMode =
       effectiveAmountMode ??
       ((existing.effectiveAmountMode ?? "auto") as EffectiveAmountMode);
     const nextEffectiveAmount =
       nextEffectiveAmountMode === "manual"
         ? (effectiveAmount ?? existing.effectiveAmount ?? rest.amount)
-        : rest.amount;
+        : rest.amount / monthYears.length;
 
     await ctx.db.patch(id, {
       ...rest,
       ...shared,
+      monthYears,
       effectiveAmount: nextEffectiveAmount,
       effectiveAmountMode: nextEffectiveAmountMode,
       expenseId,

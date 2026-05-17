@@ -1,4 +1,5 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { normalizeMonthYearsInput } from "./monthYears";
 import { paginationOptsValidator } from "convex/server";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
@@ -247,6 +248,7 @@ export const materializeDueExpenses = mutation({
       const automationKey = `recurring:${kind}:${recurring._id}:${runDate}`;
 
       if (kind === "incoming") {
+        const monthYears = normalizeMonthYearsInput([], runDate);
         const alreadyIncoming = await ctx.db
           .query("incomings")
           .withIndex("by_incoming_id", (q) => q.eq("incomingId", automationKey))
@@ -266,7 +268,7 @@ export const materializeDueExpenses = mutation({
           effectiveAmount: recurring.price,
           effectiveAmountMode: "auto",
           date: runDate,
-          monthYear: runDate.slice(0, 7),
+          monthYears,
           notes: recurring.notes,
           comments: `Triggered at ${formatJerusalemNow()}`,
           incomingId: automationKey,
@@ -285,6 +287,7 @@ export const materializeDueExpenses = mutation({
       }
 
       await ctx.db.insert("expenses", {
+        monthYears: normalizeMonthYearsInput([], runDate),
         userId,
         expense: recurring.name,
         type: recurring.expenseType ?? recurring.type ?? "Recurring",

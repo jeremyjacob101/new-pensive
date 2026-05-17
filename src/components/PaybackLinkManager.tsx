@@ -1,25 +1,8 @@
+import { formatMoney, formatWarnings, getEffectiveAmount, toAmount } from "../helpers/formatters";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { toAmount } from "../helpers/formatters";
 import { useState } from "react";
-
-type WarningResult = {
-  warnings?: Array<{ message: string }>;
-};
-
-function formatMoney(value: number) {
-  return `₪${value.toLocaleString("en-US")}`;
-}
-
-function formatWarnings(result: WarningResult | null | undefined) {
-  const warnings = result?.warnings ?? [];
-  return warnings.map((warning) => warning.message).join(" ");
-}
-
-function getEffectiveAmount(row: { amount: number; effectiveAmount?: number }) {
-  return row.effectiveAmount ?? row.amount;
-}
 
 export function ExpensePaybackLinkManager({ expenseId, disabled }: {
   expenseId: Id<"expenses">;

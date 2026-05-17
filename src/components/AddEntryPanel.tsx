@@ -1,10 +1,11 @@
 import { buildEmptySplitExpenseDraft, buildEmptySplitIncomingDraft } from "../helpers/splitDrafts";
 import { getDefaultOptionValue, getScopedOptionValues, toOptionValues } from "../helpers/options";
 import type { SplitExpenseDraft, SplitIncomingDraft } from "../types/splitDrafts";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { getMonthFromIsoDate, getTodayIsoDate } from "../helpers/dates";
 import type { FormType, UserOptions } from "../types/workspace";
+import { MonthYearMultiSelect } from "./MonthYearMultiSelect";
 import { randomId16, toAmount } from "../helpers/formatters";
-import { getTodayIsoDate } from "../helpers/dates";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { MenuItemKey } from "../types/ui";
 import { OptionPicker } from "./OptionPicker";
@@ -29,6 +30,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
       amount: number;
       effectiveAmount?: number;
       effectiveAmountMode?: "auto" | "manual";
+      monthYears?: string[];
       date: string;
       paidTo: string;
       notes?: string;
@@ -49,8 +51,8 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
       amount: number;
       effectiveAmount?: number;
       effectiveAmountMode?: "auto" | "manual";
+      monthYears?: string[];
       date: string;
-      monthYear: string;
       notes?: string;
       comments?: string;
       incomingId: string;
@@ -98,8 +100,15 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
     SplitIncomingDraft[]
   >([]);
   const [submittingSplit, setSubmittingSplit] = useState(false);
+  const defaultMonth = getMonthFromIsoDate(todayIsoDate);
+  const [expenseMonthYears, setExpenseMonthYears] = useState<string[]>(
+    defaultMonth ? [defaultMonth] : [],
+  );
+  const [incomingMonthYears, setIncomingMonthYears] = useState<string[]>(
+    defaultMonth ? [defaultMonth] : [],
+  );
 
-  const resetOptionState = useCallback(() => {
+  const resetOptionState = () => {
     setExpenseType(defaults.expenseType);
     setExpenseAccount(defaults.account);
     setExpenseCategory(defaults.category);
@@ -112,7 +121,10 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
     setRecurringIncomingSubtype("");
     setRecurringKind("expense");
     setRecurringStatus("active");
-  }, [defaults]);
+    const month = getMonthFromIsoDate(todayIsoDate);
+    setExpenseMonthYears(month ? [month] : []);
+    setIncomingMonthYears(month ? [month] : []);
+  };
 
   const openForm = (nextFormType: FormType) => {
     resetOptionState();
@@ -238,6 +250,15 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
     });
   };
 
+  const updateSplitExpenseDraftMonthYears = (
+    index: number,
+    monthYears: string[],
+  ) => {
+    setSplitExpenseDrafts((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, monthYears } : row));
+  };
+
   const updateSplitIncomingDraft = (
     index: number,
     key: keyof SplitIncomingDraft,
@@ -261,10 +282,22 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
           ...buildEmptySplitIncomingDraft(todayIsoDate),
           date: previous?.date ?? todayIsoDate,
           account: previous?.account ?? "",
-          monthYear: previous?.monthYear ?? "",
+          monthYears:
+            previous?.monthYears && previous.monthYears.length > 0
+              ? [...previous.monthYears]
+              : buildEmptySplitIncomingDraft(todayIsoDate).monthYears,
         },
       ];
     });
+  };
+
+  const updateSplitIncomingDraftMonthYears = (
+    index: number,
+    monthYears: string[],
+  ) => {
+    setSplitIncomingDrafts((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, monthYears } : row));
   };
 
   const createSplitExpenses = async () => {
@@ -277,6 +310,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
       subcategory: row.subcategory.trim(),
       paidTo: row.paidTo.trim(),
       date: row.date.trim(),
+      monthYears: row.monthYears,
       notes: row.notes.trim(),
       comments: row.comments.trim(),
     }));
@@ -289,6 +323,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
         !row.category ||
         !row.paidTo ||
         !row.date ||
+        row.monthYears.length === 0 ||
         !row.amount.trim(),
     );
     if (invalid) {
@@ -308,6 +343,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
           category: row.category,
           subcategory: row.subcategory || undefined,
           amount: toAmount(row.amount),
+          monthYears: row.monthYears,
           date: row.date,
           paidTo: row.paidTo,
           notes: row.notes || undefined,
@@ -352,7 +388,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
       incomeSubtype: row.incomeSubtype.trim(),
       account: row.account.trim(),
       date: row.date.trim(),
-      monthYear: row.monthYear.trim(),
+      monthYears: row.monthYears,
       notes: row.notes.trim(),
       comments: row.comments.trim(),
     }));
@@ -364,7 +400,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
         !row.incomeType ||
         !row.account ||
         !row.date ||
-        !row.monthYear ||
+        row.monthYears.length === 0 ||
         !row.amount.trim(),
     );
     if (invalid) {
@@ -384,7 +420,7 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
           account: row.account,
           amount: toAmount(row.amount),
           date: row.date,
-          monthYear: row.monthYear,
+          monthYears: row.monthYears,
           notes: row.notes || undefined,
           comments: row.comments || undefined,
           incomingId: randomId16(),
@@ -420,14 +456,27 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
       const detail = (event as CustomEvent<{ kind?: "expense" | "incoming" }>)
         .detail;
       const kind = detail?.kind === "incoming" ? "incoming" : "expense";
-      resetOptionState();
+      setExpenseType(defaults.expenseType);
+      setExpenseAccount(defaults.account);
+      setExpenseCategory(defaults.category);
+      setExpenseSubcategory("");
+      setIncomingType(defaults.incomeType);
+      setIncomingSubtype("");
+      setIncomingAccount(defaults.account);
+      setRecurringCategory(defaults.category);
+      setRecurringExpenseSubcategory("");
+      setRecurringIncomingSubtype("");
+      setRecurringStatus("active");
+      const month = getMonthFromIsoDate(todayIsoDate);
+      setExpenseMonthYears(month ? [month] : []);
+      setIncomingMonthYears(month ? [month] : []);
       setRecurringKind(kind);
       setFormType("recurring");
     };
     window.addEventListener("pensive:open-recurring-modal", listener);
     return () =>
       window.removeEventListener("pensive:open-recurring-modal", listener);
-  }, [resetOptionState, setFormType]);
+  }, [setFormType, defaults, todayIsoDate]);
 
   const openModalFromActiveTab = () => {
     if (activeItem === "expenses") {
@@ -498,6 +547,11 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                   className="entry-form modal-form"
                   onSubmit={(e) => void onAddExpense(e)}
                 >
+                  <input
+                    type="hidden"
+                    name="monthYears"
+                    value={JSON.stringify(expenseMonthYears)}
+                  />
                   <input name="expense" placeholder="Expense" required />
                   <OptionPicker
                     kind="expenseType"
@@ -548,6 +602,17 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                     name="date"
                     type="date"
                     defaultValue={todayIsoDate}
+                    onChange={(event) => {
+                      const month = getMonthFromIsoDate(event.target.value);
+                      if (expenseMonthYears.length === 0 && month) {
+                        setExpenseMonthYears([month]);
+                      }
+                    }}
+                    required
+                  />
+                  <MonthYearMultiSelect
+                    value={expenseMonthYears}
+                    onChange={setExpenseMonthYears}
                     required
                   />
                   <input name="paidTo" placeholder="PaidTo" required />
@@ -692,6 +757,13 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                           }
                           required
                         />
+                        <MonthYearMultiSelect
+                          value={draft.monthYears}
+                          onChange={(value) =>
+                            updateSplitExpenseDraftMonthYears(index, value)
+                          }
+                          required
+                        />
                         <input
                           placeholder="PaidTo"
                           value={draft.paidTo}
@@ -758,6 +830,11 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                   className="entry-form modal-form"
                   onSubmit={(e) => void onAddIncoming(e)}
                 >
+                  <input
+                    type="hidden"
+                    name="monthYears"
+                    value={JSON.stringify(incomingMonthYears)}
+                  />
                   <input name="incoming" placeholder="Incoming" required />
                   <input name="paidBy" placeholder="PaidBy" required />
                   <OptionPicker
@@ -798,9 +875,19 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                     name="date"
                     type="date"
                     defaultValue={todayIsoDate}
+                    onChange={(event) => {
+                      const month = getMonthFromIsoDate(event.target.value);
+                      if (incomingMonthYears.length === 0 && month) {
+                        setIncomingMonthYears([month]);
+                      }
+                    }}
                     required
                   />
-                  <input name="monthYear" placeholder="MonthYear" required />
+                  <MonthYearMultiSelect
+                    value={incomingMonthYears}
+                    onChange={setIncomingMonthYears}
+                    required
+                  />
                   <input name="notes" placeholder="Notes" />
                   <input name="comments" placeholder="Comments" />
                   <button
@@ -946,15 +1033,10 @@ export function AddEntryPanel({ activeItem, formType, setFormType, onAddExpense,
                           }
                           required
                         />
-                        <input
-                          placeholder="MonthYear"
-                          value={draft.monthYear}
-                          onChange={(e) =>
-                            updateSplitIncomingDraft(
-                              index,
-                              "monthYear",
-                              e.target.value,
-                            )
+                        <MonthYearMultiSelect
+                          value={draft.monthYears}
+                          onChange={(value) =>
+                            updateSplitIncomingDraftMonthYears(index, value)
                           }
                           required
                         />

@@ -55,6 +55,41 @@ export function getTodayIsoDate(): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getMonthFromIsoDate(value: string): string {
+  const match = value.trim().match(/^(\d{4})-(\d{2})-\d{2}$/);
+  if (!match) return "";
+  return `${match[1]}-${match[2]}`;
+}
+
+export function formatMonthValue(value: string): string {
+  const match = value.trim().match(/^(\d{4})-(\d{2})$/);
+  if (!match) return value;
+  return formatMonthYearLabel(`${match[1]}-${match[2]}-01`) || value;
+}
+
+export function normalizeMonthYears(values: string[]) {
+  return [...new Set(values.map((v) => v.trim()).filter(Boolean))].sort((
+    a,
+    b,
+  ) => a.localeCompare(b));
+}
+
+export function parseMonthYears(raw: string | null | undefined, date: string) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw ?? "[]");
+  } catch {
+    parsed = [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const cleaned = [...new Set(parsed.map((value) => String(value).trim()))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+  if (cleaned.length > 0) return cleaned;
+  const fallback = getMonthFromIsoDate(date);
+  return fallback ? [fallback] : [];
+}
+
 export function formatOrdinalDay(dayOfMonth: number): string {
   const remainder100 = dayOfMonth % 100;
   if (remainder100 >= 11 && remainder100 <= 13) return `${dayOfMonth}th`;

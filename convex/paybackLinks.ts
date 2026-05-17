@@ -1,7 +1,7 @@
 import { getAllocationWarnings, getPaybackLinkTimestamp, recomputeLinkedEffectiveAmounts } from "./paybackHelpers";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import type { QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
