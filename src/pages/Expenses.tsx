@@ -43,8 +43,8 @@ export function Expenses() {
     results: expenses,
     status: expensesStatus,
     loadMore: loadMoreExpenses,
-  } = usePaginatedQuery(api.expenses.list, {}, { initialNumItems: 50 });
-  useAutoLoadMore(expensesStatus, () => loadMoreExpenses(50));
+  } = usePaginatedQuery(api.expenses.list, {}, { initialNumItems: 100 });
+  useAutoLoadMore(expensesStatus, () => loadMoreExpenses(100));
 
   const displayItems = useMemo(() => {
     const groupedMap = new Map<
