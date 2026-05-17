@@ -13,7 +13,9 @@
   --month-width: 88px;
 }
 
-.theme-dark {
+.theme-dark,
+body.theme-dark,
+html.theme-dark {
   --bg: #000000;
   --text: #e5e7eb;
   --border: #334155;
@@ -350,6 +352,19 @@ thead th {
   max-width: 820px;
   margin-left: 0;
   margin-right: 0;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.entry-card-list.is-month-transitioning {
+  opacity: 0.72;
+  transform: translateY(6px);
+}
+
+.entry-list-sentinel {
+  height: 1px;
+  width: 100%;
 }
 
 .entries-with-month {
@@ -412,28 +427,8 @@ thead th {
   opacity: 0.75;
 }
 
-.month-indicator-area .month-indicator {
-  position: static;
-  transform: none;
-  left: auto;
-  top: auto;
-  min-width: auto;
-  pointer-events: auto;
-}
-
 .month-indicator {
-  position: fixed;
-  top: 88px;
-  left: var(--month-row-left, 0px);
-  transform: translateX(calc(-100% - 18px));
-  width: max-content;
-  min-width: 146px;
-  height: fit-content;
-  display: flex;
-  justify-content: flex-end;
-  text-align: right;
-  pointer-events: none;
-  z-index: 20;
+  display: none;
 }
 
 .month-indicator-value {
@@ -461,10 +456,8 @@ thead th {
 }
 
 .month-indicator-area {
-  position: fixed;
+  position: sticky;
   top: 88px;
-  left: var(--month-row-left, 0px);
-  transform: translateX(calc(-100% - 18px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -473,6 +466,7 @@ thead th {
   min-width: 146px;
   pointer-events: auto;
   z-index: 20;
+  align-self: flex-start;
 }
 
 .month-indicator-range {
@@ -480,6 +474,55 @@ thead th {
   width: 100%;
   text-align: right;
   white-space: nowrap;
+}
+
+.month-navigator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  width: 100%;
+  min-width: 146px;
+}
+
+.month-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms, opacity 150ms;
+  padding: 0;
+}
+
+.month-nav-btn:hover:not(:disabled) {
+  background: var(--border);
+  border-color: color-mix(in srgb, var(--border) 70%, var(--text) 30%);
+}
+
+.month-nav-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.month-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.month-navigator-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text) 84%, transparent 16%);
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
+  padding: 0 6px;
 }
 
 .pie-chart-panel {
@@ -691,6 +734,26 @@ thead th {
   border-radius: 12px;
   background: var(--surface);
   overflow: visible;
+}
+
+.row-match-monthYearsOnly {
+  opacity: 0.55;
+}
+
+.row-match-dateOnly {
+  opacity: 0.7;
+}
+
+.row-match-dateOnly .entry-card-title,
+.row-match-dateOnly .grouped-expense-row-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text) 55%, transparent 45%);
+}
+
+.row-match-dateOnly .entry-card-color-dot,
+.row-match-dateOnly .grouped-expense-row-main .entry-card-color-dot {
+  opacity: 0.7;
 }
 
 .entry-card-main {

@@ -225,3 +225,12 @@ export function getMonthStartEnd(dateStr: string): {
   const end = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
   return { start, end };
 }
+
+export function getMonthStartEndFromMonth(month: string): {
+  start: string;
+  end: string;
+} {
+  const match = month.trim().match(/^(\d{4})-(\d{2})$/);
+  if (!match) return { start: "", end: "" };
+  return getMonthStartEnd(`${match[1]}-${match[2]}-01`);
+}

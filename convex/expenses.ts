@@ -32,6 +32,26 @@ function normalizeDate(value: string) {
   return input;
 }
 
+function toIsoDate(value: string) {
+  const input = value.trim();
+  const iso = input.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso) {
+    return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+  }
+  const us = input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (us) {
+    return `${us[3]}-${us[1].padStart(2, "0")}-${us[2].padStart(2, "0")}`;
+  }
+  return "";
+}
+
+function toMonth(value: string, monthYears?: string[]) {
+  const iso = toIsoDate(value);
+  if (iso) return iso.slice(0, 7);
+  const fallback = monthYears?.find((m) => /^\d{4}-\d{2}$/.test(m));
+  return fallback ?? null;
+}
+
 function normalizeSharedFields(args: {
   baseExpenseId?: string;
   baseExpenseLabel?: string;
@@ -122,6 +142,93 @@ export const list = query({
       .withIndex("by_user_id_date", (q) => q.eq("userId", userId))
       .order("desc")
       .paginate({ ...paginationOpts, numItems });
+  },
+});
+
+export const listByDateScope = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+    targetMonths: v.optional(v.array(v.string())),
+    includeMonthYearOverlapOutsideDate: v.optional(v.boolean()),
+  },
+  handler: async (
+    ctx,
+    { startDate, endDate, targetMonths, includeMonthYearOverlapOutsideDate },
+  ) => {
+    const userId = await requireUserId(ctx);
+    const scopedRows = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id_date", (q) =>
+        q.eq("userId", userId).gte("date", startDate).lte("date", endDate))
+      .order("desc")
+      .collect();
+
+    const rowsById = new Map(scopedRows.map((row) => [row._id, row]));
+
+    if (includeMonthYearOverlapOutsideDate && (targetMonths?.length ?? 0) > 0) {
+      const monthSet = new Set(targetMonths ?? []);
+      const candidates = await ctx.db
+        .query("expenses")
+        .withIndex("by_user_id_date", (q) => q.eq("userId", userId))
+        .order("desc")
+        .take(500);
+
+      for (const row of candidates) {
+        if ((row.monthYears ?? []).some((month) => monthSet.has(month))) {
+          rowsById.set(row._id, row);
+        }
+      }
+    }
+
+    const rows = [...rowsById.values()];
+    rows.sort((a, b) => {
+      if (a.date === b.date) return b._creationTime - a._creationTime;
+      return b.date.localeCompare(a.date);
+    });
+    return rows;
+  },
+});
+
+export const monthBounds = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const newest = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id_date", (q) => q.eq("userId", userId))
+      .order("desc")
+      .first();
+    const oldest = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id_date", (q) => q.eq("userId", userId))
+      .order("asc")
+      .first();
+    const newestMonth = newest ? toMonth(newest.date, newest.monthYears) : null;
+    const oldestMonth = oldest ? toMonth(oldest.date, oldest.monthYears) : null;
+    return {
+      newestMonth,
+      oldestMonth,
+    };
+  },
+});
+
+export const previousMonthBefore = query({
+  args: {
+    month: v.string(),
+  },
+  handler: async (ctx, { month }) => {
+    const userId = await requireUserId(ctx);
+    if (!/^\d{4}-\d{2}$/.test(month)) return null;
+
+    const row = await ctx.db
+      .query("expenses")
+      .withIndex("by_user_id_date", (q) =>
+        q.eq("userId", userId).lt("date", `${month}-01`))
+      .order("desc")
+      .first();
+
+    return row ? toMonth(row.date, row.monthYears) : null;
   },
 });
 

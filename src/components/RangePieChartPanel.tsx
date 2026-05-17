@@ -1,4 +1,3 @@
-import { getMonthStartEnd, getMonthsInRange } from "../helpers/dates";
 import type { RangePieChartPanelProps } from "../types/pieChart";
 import { CategoryPieChart } from "./CategoryPieChart";
 import { getOptionColor } from "../helpers/options";
@@ -7,32 +6,26 @@ import { useMemo, useState } from "react";
 export function RangePieChartPanel({
   rows,
   userOptions,
-  activeDate,
+  mode,
+  startDate,
+  endDate,
+  targetMonths,
   kind,
   onRangeChange,
   onReset,
 }: RangePieChartPanelProps) {
-  const [mode, setMode] = useState<"month" | "custom">("month");
+  const [isCustomEditorOpen, setIsCustomEditorOpen] = useState(
+    mode === "custom",
+  );
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [showSubcategories, setShowSubcategories] = useState(false);
-
-  const { start: monthStart, end: monthEnd } = useMemo(
-    () => getMonthStartEnd(activeDate),
-    [activeDate],
-  );
-
-  const effectiveStart = mode === "month" ? monthStart : customStart;
-  const effectiveEnd = mode === "month" ? monthEnd : customEnd;
+  const editorMode =
+    isCustomEditorOpen || mode === "custom" ? "custom" : "month";
 
   const categoryOptionKind = kind === "expense" ? "category" : "incomeType";
   const subcategoryOptionKind =
     kind === "expense" ? "subcategory" : "incomeSubtype";
-
-  const targetMonths = useMemo(
-    () => getMonthsInRange(effectiveStart, effectiveEnd),
-    [effectiveStart, effectiveEnd],
-  );
 
   const pieData = useMemo(() => {
     if (targetMonths.length === 0) return [];
@@ -70,12 +63,13 @@ export function RangePieChartPanel({
 
   const handleApply = () => {
     if (customStart && customEnd) {
+      setIsCustomEditorOpen(true);
       onRangeChange(customStart, customEnd);
     }
   };
 
   const handleReset = () => {
-    setMode("month");
+    setIsCustomEditorOpen(false);
     setCustomStart("");
     setCustomEnd("");
     setShowSubcategories(false);
@@ -87,24 +81,25 @@ export function RangePieChartPanel({
       <div className="pie-chart-panel-modes">
         <button
           type="button"
-          className={`pie-mode-btn${mode === "month" ? " active" : ""}`}
-          onClick={() => {
-            setMode("month");
-            onReset();
-          }}
+          className={`pie-mode-btn${editorMode === "month" ? " active" : ""}`}
+          onClick={handleReset}
         >
           This Month
         </button>
         <button
           type="button"
-          className={`pie-mode-btn${mode === "custom" ? " active" : ""}`}
-          onClick={() => setMode("custom")}
+          className={`pie-mode-btn${editorMode === "custom" ? " active" : ""}`}
+          onClick={() => {
+            setIsCustomEditorOpen(true);
+            setCustomStart(startDate);
+            setCustomEnd(endDate);
+          }}
         >
           Custom Range
         </button>
       </div>
 
-      {mode === "custom" && (
+      {editorMode === "custom" && (
         <div className="pie-chart-panel-dates">
           <label className="pie-date-field">
             From

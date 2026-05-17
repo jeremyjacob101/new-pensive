@@ -22,7 +22,10 @@ export interface PieRow {
 export interface RangePieChartPanelProps {
   rows: PieRow[];
   userOptions: UserOptions | undefined;
-  activeDate: string;
+  mode: "month" | "custom";
+  startDate: string;
+  endDate: string;
+  targetMonths: string[];
   kind: "expense" | "incoming";
   onRangeChange: (start: string, end: string) => void;
   onReset: () => void;

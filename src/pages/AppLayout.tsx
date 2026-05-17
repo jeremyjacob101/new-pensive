@@ -41,6 +41,16 @@ export function AppLayout() {
     document.body.style.backgroundColor = "#000000";
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle("theme-dark", isDark);
+    document.documentElement.classList.toggle("theme-dark", isDark);
+
+    return () => {
+      document.body.classList.remove("theme-dark");
+      document.documentElement.classList.remove("theme-dark");
+    };
+  }, [isDark]);
+
   return (
     <div className={isDark ? "theme-dark" : ""}>
       <main className="page">
