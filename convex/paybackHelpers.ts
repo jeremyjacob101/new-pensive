@@ -23,13 +23,12 @@ export function normalizeEffectiveAmountFields(input: EffectiveAmountInput): {
   effectiveAmountMode: EffectiveAmountMode;
 } {
   const effectiveAmountMode = input.effectiveAmountMode ?? "auto";
-  const monthCount = Math.max(1, input.monthYears?.length ?? 1);
   return {
     effectiveAmountMode,
     effectiveAmount:
       effectiveAmountMode === "manual"
         ? (input.effectiveAmount ?? input.amount)
-        : input.amount / monthCount,
+        : input.amount,
   };
 }
 
@@ -78,8 +77,7 @@ export async function recomputeExpenseEffectiveAmount(
   }
 
   const allocated = await sumExpenseLinks(ctx, userId, expenseId);
-  const monthCount = Math.max(1, expense.monthYears?.length ?? 1);
-  const effectiveAmount = (expense.amount - allocated) / monthCount;
+  const effectiveAmount = expense.amount - allocated;
   await ctx.db.patch(expenseId, {
     effectiveAmount,
     effectiveAmountMode: "auto",
@@ -99,8 +97,7 @@ export async function recomputeIncomingEffectiveAmount(
   }
 
   const allocated = await sumIncomingLinks(ctx, userId, incomingId);
-  const monthCount = Math.max(1, incoming.monthYears?.length ?? 1);
-  const effectiveAmount = (incoming.amount - allocated) / monthCount;
+  const effectiveAmount = incoming.amount - allocated;
   await ctx.db.patch(incomingId, {
     effectiveAmount,
     effectiveAmountMode: "auto",

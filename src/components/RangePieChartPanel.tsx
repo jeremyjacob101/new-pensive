@@ -1,7 +1,7 @@
 import { getMonthStartEnd, getMonthsInRange } from "../helpers/dates";
 import type { RangePieChartPanelProps } from "../types/pieChart";
-import { getOptionColor } from "../helpers/options";
 import { CategoryPieChart } from "./CategoryPieChart";
+import { getOptionColor } from "../helpers/options";
 import { useMemo, useState } from "react";
 
 export function RangePieChartPanel({
@@ -41,7 +41,9 @@ export function RangePieChartPanel({
     for (const row of rows) {
       const matchingMonths = row.monthYears.filter((m) => targetSet.has(m));
       if (matchingMonths.length === 0) continue;
-      const contribution = row.effectiveAmount * matchingMonths.length;
+      const monthCount = Math.max(1, row.monthYears.length);
+      const perMonthContribution = row.effectiveAmount / monthCount;
+      const contribution = perMonthContribution * matchingMonths.length;
       const key =
         showSubcategories && row.subcategory ? row.subcategory : row.category;
       map.set(key, (map.get(key) ?? 0) + contribution);

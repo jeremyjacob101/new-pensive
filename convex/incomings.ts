@@ -254,7 +254,7 @@ export const update = mutation({
     const nextEffectiveAmount =
       nextEffectiveAmountMode === "manual"
         ? (effectiveAmount ?? existing.effectiveAmount ?? rest.amount)
-        : rest.amount / monthYears.length;
+        : rest.amount;
 
     await ctx.db.patch(id, {
       ...rest,

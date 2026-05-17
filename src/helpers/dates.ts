@@ -29,6 +29,17 @@ export function formatMonthYearLabel(value: string): string {
   }).format(parsed);
 }
 
+export function shiftMonth(month: string, delta: number): string {
+  const match = month.trim().match(/^(\d{4})-(\d{2})$/);
+  if (!match) return month;
+  const year = parseInt(match[1], 10);
+  const monthNum = parseInt(match[2], 10) - 1;
+  const totalMonths = year * 12 + monthNum + delta;
+  const newYear = Math.floor(totalMonths / 12);
+  const newMonth = ((totalMonths % 12) + 12) % 12;
+  return `${newYear}-${String(newMonth + 1).padStart(2, "0")}`;
+}
+
 export function formatMonthLabel(value: string): string {
   const parsed = new Date(`${value}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return "";

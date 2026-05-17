@@ -1562,28 +1562,148 @@ thead th {
   gap: 8px;
 }
 
-.month-multi-select-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.month-multi-select-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.month-chip {
-  border: 1px solid #666;
-  background: transparent;
-  color: inherit;
-  border-radius: 999px;
-  padding: 4px 10px;
-  cursor: pointer;
-}
-
 .month-multi-select-error {
   color: #d96c6c;
   font-size: 12px;
+}
+
+.month-range-slider {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px 4px;
+  background: rgba(0, 0, 0, 0.2);
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+}
+
+.month-range-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.month-range-slider::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.month-range-slider::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.month-range-track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: max-content;
+  padding: 0 12px;
+}
+
+.month-tick-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.month-tick-year {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 700;
+  padding: 0 4px 2px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.month-tick {
+  border: 2px solid #333;
+  background: #1a1a1a;
+  color: #444;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: default;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.month-tick-outside {
+  border-color: #222;
+  background: #111;
+  color: #333;
+}
+
+.month-tick-in-range {
+  border-color: #555;
+  background: #2a2a2a;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.month-tick-in-range:hover {
+  border-color: #e55;
+  background: rgba(238, 85, 85, 0.15);
+  color: #e55;
+}
+
+.month-tick-selected {
+  border-color: #4a9eff;
+  background: #4a9eff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.3);
+}
+
+.month-tick-selected:hover {
+  border-color: #e55;
+  background: #e55;
+  box-shadow: 0 0 8px rgba(238, 85, 85, 0.3);
+}
+
+.month-range-handle {
+  width: 22px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: ew-resize;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  color: #fff;
+  transition: background 0.1s;
+}
+
+.month-range-handle-left {
+  background: #4a9eff;
+  margin-right: 2px;
+}
+
+.month-range-handle-left:hover {
+  background: #3580d9;
+}
+
+.month-range-handle-right {
+  background: #4a9eff;
+  margin-left: 2px;
+}
+
+.month-range-handle-right:hover {
+  background: #3580d9;
+}
+
+.month-range-summary {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  padding: 4px 0 0;
 }
