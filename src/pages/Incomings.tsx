@@ -204,6 +204,20 @@ export function Incomings() {
     [activeDateRange, monthOverlapSet],
   );
 
+  const getRowMatchDisclaimer = useCallback(
+    (row: { date: string; monthYears?: string[] }) => {
+      const matchState = getRowMatchState(row);
+      if (matchState === "monthYearsOnly") {
+        return "applied this month/s, paid in different month";
+      }
+      if (matchState === "dateOnly") {
+        return "paid this month, applied to different month/s";
+      }
+      return null;
+    },
+    [getRowMatchState],
+  );
+
   const displayItems = useMemo(() => {
     const groupedMap = new Map<
       string,
@@ -593,6 +607,11 @@ export function Incomings() {
                           >
                             <div className="grouped-expense-row-main">
                               <div className="grouped-expense-row-title-wrap">
+                                {getRowMatchDisclaimer(row) ? (
+                                  <span className="row-match-disclaimer">
+                                    {getRowMatchDisclaimer(row)}
+                                  </span>
+                                ) : null}
                                 <span className="grouped-expense-row-title">
                                   {row.incoming}
                                 </span>
@@ -931,6 +950,11 @@ export function Incomings() {
                         aria-hidden="true"
                       />
                       <div className="entry-card-title-wrap">
+                        {getRowMatchDisclaimer(row) ? (
+                          <span className="row-match-disclaimer">
+                            {getRowMatchDisclaimer(row)}
+                          </span>
+                        ) : null}
                         <span className="entry-card-title">{row.incoming}</span>
                         <span
                           className="entry-card-color-dot"

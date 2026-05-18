@@ -57,6 +57,26 @@ export function Options() {
     }
   };
 
+  const confirmDelete = () =>
+    window.confirm(
+      "Are you sure you want to delete this item? This action cannot be undone.",
+    );
+
+  const removeOptionWithConfirm = (args: {
+    kind:
+      | "expenseType"
+      | "account"
+      | "category"
+      | "subcategory"
+      | "incomeType"
+      | "incomeSubtype";
+    value: string;
+    parentValue?: string;
+  }) => {
+    if (!confirmDelete()) return;
+    void removeUserOption(args);
+  };
+
   return (
     <div className="options-page">
       {optionKinds
@@ -336,7 +356,7 @@ export function Options() {
                           type="button"
                           draggable={false}
                           onClick={() =>
-                            void removeUserOption({
+                            removeOptionWithConfirm({
                               kind: key,
                               value: option.value,
                             })
@@ -442,7 +462,7 @@ export function Options() {
                             type="button"
                             draggable={false}
                             onClick={() =>
-                              void removeUserOption({
+                              removeOptionWithConfirm({
                                 kind: childKind!,
                                 value: child.value,
                                 parentValue: option.value,

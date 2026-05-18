@@ -858,6 +858,8 @@ thead th {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  position: relative;
+  overflow: visible;
 }
 
 .entry-card-color-dot {
@@ -1042,6 +1044,27 @@ thead th {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.row-match-disclaimer {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 4px);
+  width: 100%;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border) 68%);
+  background: color-mix(in srgb, var(--surface) 86%, var(--accent) 14%);
+  color: color-mix(in srgb, var(--text) 72%, var(--accent) 28%);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .grouped-expense-row-title {
